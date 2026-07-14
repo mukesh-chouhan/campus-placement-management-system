@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+/frontend/node_modules/
+
+# Build outputs
+target/
+/backend/target/
+dist/
+/frontend/dist/
+
+# IDE files
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# System logs & metadata
+*.log
+.system_generated/
+.gemini/
+.agents/
+.git/
+.DS_Store
+Thumbs.db
