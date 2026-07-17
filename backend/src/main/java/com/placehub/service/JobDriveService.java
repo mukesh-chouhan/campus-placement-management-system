@@ -44,22 +44,16 @@ public class JobDriveService {
         jobDrive.setDriveDate(request.getDriveDate());
         jobDrive.setStatus(request.getStatus());
 
-        JobDrive savedDrive = jobDriveRepository.save(jobDrive);
-
         if (request.getEligibleBranches() != null) {
-            List<EligibleBranch> branches = request.getEligibleBranches().stream()
-                    .map(branchName -> {
-                        EligibleBranch branch = new EligibleBranch();
-                        branch.setJobDrive(savedDrive);
-                        branch.setBranch(branchName);
-                        return branch;
-                    })
-                    .collect(Collectors.toList());
-            eligibleBranchRepository.saveAll(branches);
-            savedDrive.setEligibleBranches(branches);
+            for (String branchName : request.getEligibleBranches()) {
+                EligibleBranch branch = new EligibleBranch();
+                branch.setJobDrive(jobDrive);
+                branch.setBranch(branchName);
+                jobDrive.getEligibleBranches().add(branch);
+            }
         }
 
-        return savedDrive;
+        return jobDriveRepository.save(jobDrive);
     }
 
     @Transactional(readOnly = true)
@@ -90,26 +84,18 @@ public class JobDriveService {
         jobDrive.setDriveDate(request.getDriveDate());
         jobDrive.setStatus(request.getStatus());
 
-        // Remove old branches
-        eligibleBranchRepository.deleteAll(jobDrive.getEligibleBranches());
+        // Update branches by clearing and re-adding (orphanRemoval handles deletes automatically)
         jobDrive.getEligibleBranches().clear();
-
-        JobDrive savedDrive = jobDriveRepository.save(jobDrive);
-
         if (request.getEligibleBranches() != null) {
-            List<EligibleBranch> branches = request.getEligibleBranches().stream()
-                    .map(branchName -> {
-                        EligibleBranch branch = new EligibleBranch();
-                        branch.setJobDrive(savedDrive);
-                        branch.setBranch(branchName);
-                        return branch;
-                    })
-                    .collect(Collectors.toList());
-            eligibleBranchRepository.saveAll(branches);
-            savedDrive.setEligibleBranches(branches);
+            for (String branchName : request.getEligibleBranches()) {
+                EligibleBranch branch = new EligibleBranch();
+                branch.setJobDrive(jobDrive);
+                branch.setBranch(branchName);
+                jobDrive.getEligibleBranches().add(branch);
+            }
         }
 
-        return savedDrive;
+        return jobDriveRepository.save(jobDrive);
     }
 
     @Transactional
