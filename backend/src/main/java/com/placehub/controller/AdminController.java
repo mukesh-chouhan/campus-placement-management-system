@@ -3,6 +3,9 @@ package com.placehub.controller;
 import com.placehub.dto.request.ApplicationStatusRequest;
 import com.placehub.dto.request.CompanyRequest;
 import com.placehub.dto.request.JobDriveRequest;
+import com.placehub.dto.request.ProfileUpdateRequest;
+import com.placehub.dto.request.RegisterRequest;
+import com.placehub.service.StudentService;
 import com.placehub.dto.response.ApplicationResponse;
 import com.placehub.dto.response.JobDriveResponse;
 import com.placehub.dto.response.StudentResponse;
@@ -43,6 +46,7 @@ public class AdminController {
     private final CompanyRepository companyRepository;
     private final JobDriveRepository jobDriveRepository;
     private final ApplicationRepository applicationRepository;
+    private final StudentService studentService;
 
     // --- Company CRUD ---
     @PostMapping("/companies")
@@ -126,6 +130,24 @@ public class AdminController {
                 .map(StudentResponse::fromEntity)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/students")
+    public ResponseEntity<StudentResponse> createStudent(@Valid @RequestBody RegisterRequest request) {
+        Student student = studentService.createStudent(request);
+        return new ResponseEntity<>(StudentResponse.fromEntity(student), HttpStatus.CREATED);
+    }
+
+    @PutMapping("/students/{id}")
+    public ResponseEntity<StudentResponse> updateStudent(@PathVariable Long id, @Valid @RequestBody ProfileUpdateRequest request) {
+        Student student = studentService.updateStudentAdmin(id, request);
+        return ResponseEntity.ok(StudentResponse.fromEntity(student));
+    }
+
+    @DeleteMapping("/students/{id}")
+    public ResponseEntity<Void> deleteStudent(@PathVariable Long id) {
+        studentService.deleteStudent(id);
+        return ResponseEntity.noContent().build();
     }
 
     // --- Dashboard Stats ---
