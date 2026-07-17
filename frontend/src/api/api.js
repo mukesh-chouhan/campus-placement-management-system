@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const API = axios.create({
-  baseURL: 'http://localhost:8080',
+  baseURL: 'https://campus-placement-management-system-v6j0.onrender.com',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -26,7 +26,6 @@ API.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response) {
-      // Token expired or invalid
       if (error.response.status === 401) {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
