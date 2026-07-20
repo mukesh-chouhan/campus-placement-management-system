@@ -40,6 +40,9 @@ public class ApplicationServiceTest {
     @Mock
     private EligibilityService eligibilityService;
 
+    @Mock
+    private EmailService emailService;
+
     @InjectMocks
     private ApplicationService applicationService;
 
