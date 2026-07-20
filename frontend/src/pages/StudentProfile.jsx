@@ -127,8 +127,59 @@ const StudentProfile = () => {
           </button>
         )}
       </div>
+      {/* Dedicated PDF Resume Upload Card */}
+      <div className="content-card" style={{ marginBottom: 24, borderTop: '4px solid var(--primary)' }}>
+        <h3 style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '1.1rem', marginBottom: 6 }}>
+          <FileText size={20} className="text-primary" />
+          <span>Student PDF Resume Document</span>
+        </h3>
+        <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: 16 }}>
+          Upload your official candidate PDF resume for recruiters and campus placement administrators to evaluate.
+        </p>
 
+        <div style={{ background: 'var(--bg-body)', padding: 20, borderRadius: 10, border: '1px dashed var(--border)', display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {profile?.resumeUrl ? (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+              <div>
+                <span style={{ fontWeight: 700, display: 'block', fontSize: '0.95rem', color: 'var(--success)' }}>
+                  ✅ PDF Resume Uploaded & Attached
+                </span>
+                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                  Your resume is saved and ready for placement drive applications.
+                </span>
+              </div>
+              <a 
+                href={`https://campus-placement-management-system-v6j0.onrender.com${profile.resumeUrl}`} 
+                target="_blank" 
+                rel="noreferrer" 
+                className="btn btn-secondary btn-sm"
+                style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+              >
+                <ExternalLink size={14} />
+                <span>View / Download PDF Resume</span>
+              </a>
+            </div>
+          ) : (
+            <span style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+              No PDF resume uploaded yet. Click below to attach your resume file.
+            </span>
+          )}
 
+          <div style={{ marginTop: 4 }}>
+            <label className="btn btn-primary btn-sm" style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <Upload size={14} />
+              <span>{uploadingResume ? 'Uploading PDF...' : profile?.resumeUrl ? 'Replace PDF Resume' : 'Upload PDF Resume'}</span>
+              <input 
+                type="file" 
+                accept=".pdf" 
+                onChange={handleResumeUpload} 
+                style={{ display: 'none' }}
+                disabled={uploadingResume}
+              />
+            </label>
+          </div>
+        </div>
+      </div>
 
       <div className="content-card">
         {isEditing ? (

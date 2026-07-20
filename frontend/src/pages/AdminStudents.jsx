@@ -301,6 +301,7 @@ const AdminStudents = () => {
                   <th>CGPA Score</th>
                   <th>Backlogs</th>
                   <th>Graduation Year</th>
+                  <th>Resume (PDF)</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -328,6 +329,22 @@ const AdminStudents = () => {
                     </td>
                     <td>{student.graduationYear}</td>
                     <td>
+                      {student.resumeUrl ? (
+                        <a 
+                          href={`https://campus-placement-management-system-v6j0.onrender.com${student.resumeUrl}`}
+                          target="_blank" 
+                          rel="noreferrer" 
+                          className="btn btn-secondary btn-sm"
+                          style={{ padding: '4px 8px', display: 'inline-flex', alignItems: 'center', gap: 4, textDecoration: 'none', fontSize: '0.75rem' }}
+                        >
+                          <FileText size={12} className="text-primary" />
+                          <span>View PDF</span>
+                        </a>
+                      ) : (
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Not Uploaded</span>
+                      )}
+                    </td>
+                    <td>
                       <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                         <button 
                           className="btn btn-secondary btn-sm"
@@ -338,19 +355,6 @@ const AdminStudents = () => {
                           <Eye size={14} />
                           <span>Profile</span>
                         </button>
-                        {student.resumeUrl && (
-                          <a 
-                            href={`https://campus-placement-management-system-v6j0.onrender.com${student.resumeUrl}`}
-                            target="_blank" 
-                            rel="noreferrer" 
-                            className="btn btn-primary btn-sm"
-                            style={{ padding: '6px 10px', display: 'flex', alignItems: 'center', gap: 4, textDecoration: 'none' }}
-                            title="View PDF Resume"
-                          >
-                            <FileText size={14} />
-                            <span>Resume</span>
-                          </a>
-                        )}
                         <button 
                           className="btn btn-secondary btn-sm"
                           style={{ padding: '6px' }}
@@ -472,6 +476,32 @@ const AdminStudents = () => {
                   ) : (
                     <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
                       No skills configured in candidate profile.
+                    </span>
+                  )}
+                </div>
+
+                <hr style={{ border: 'none', borderBottom: '1px solid var(--border)' }} />
+
+                {/* PDF Resume Access */}
+                <div>
+                  <h4 style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '1rem', marginBottom: 12 }}>
+                    <FileText size={16} className="text-primary" />
+                    <span>Candidate PDF Resume</span>
+                  </h4>
+                  {selectedStudent.resumeUrl ? (
+                    <a
+                      href={`https://campus-placement-management-system-v6j0.onrender.com${selectedStudent.resumeUrl}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="btn btn-primary btn-sm"
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: 6, textDecoration: 'none' }}
+                    >
+                      <FileText size={14} />
+                      <span>View / Download Resume (PDF)</span>
+                    </a>
+                  ) : (
+                    <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                      No PDF resume uploaded by candidate yet.
                     </span>
                   )}
                 </div>
