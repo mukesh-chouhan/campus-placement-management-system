@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 public class JobDriveController {
     private final JobDriveService jobDriveService;
     private final StudentService studentService;
+    private final com.placehub.service.AIEvaluatorService aiEvaluatorService;
 
     @GetMapping
     public ResponseEntity<List<JobDriveResponse>> getActiveJobs() {
@@ -33,6 +34,24 @@ public class JobDriveController {
     public ResponseEntity<JobDriveResponse> getJobById(@PathVariable Long id) {
         JobDrive drive = jobDriveService.getJobDriveById(id);
         return ResponseEntity.ok(JobDriveResponse.fromEntity(drive));
+    }
+
+    @GetMapping("/{id}/match")
+    public ResponseEntity<com.placehub.dto.response.JobMatchResponse> getJobMatch(@PathVariable Long id) {
+        Student student = studentService.getCurrentStudent();
+        JobDrive drive = jobDriveService.getJobDriveById(id);
+        return ResponseEntity.ok(aiEvaluatorService.evaluateMatch(student, drive));
+    }
+
+    @GetMapping("/matches")
+    public ResponseEntity<java.util.Map<Long, com.placehub.dto.response.JobMatchResponse>> getAllJobMatches() {
+        Student student = studentService.getCurrentStudent();
+        List<JobDrive> drives = jobDriveService.getActiveJobDrives();
+        java.util.Map<Long, com.placehub.dto.response.JobMatchResponse> matches = new java.util.HashMap<>();
+        for (JobDrive drive : drives) {
+            matches.put(drive.getId(), aiEvaluatorService.evaluateMatch(student, drive));
+        }
+        return ResponseEntity.ok(matches);
     }
 
     @GetMapping("/eligible")

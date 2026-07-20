@@ -9,13 +9,15 @@ import {
   Check, 
   X,
   FileText,
-  AlertCircle
+  AlertCircle,
+  Sparkles
 } from 'lucide-react';
 
 const JobDrives = () => {
   const [drives, setDrives] = useState([]);
   const [studentProfile, setStudentProfile] = useState(null);
   const [applications, setApplications] = useState([]);
+  const [jobMatches, setJobMatches] = useState({});
   const [loading, setLoading] = useState(true);
 
   // Filters
@@ -36,6 +38,11 @@ const JobDrives = () => {
       setStudentProfile(profileRes.data);
       setDrives(drivesRes.data);
       setApplications(appsRes.data);
+
+      try {
+        const matchesRes = await API.get('/api/jobs/matches');
+        setJobMatches(matchesRes.data || {});
+      } catch (e) {}
     } catch (err) {
       console.error('Error fetching job drives data:', err);
     } finally {
@@ -46,6 +53,42 @@ const JobDrives = () => {
   useEffect(() => {
     fetchData();
   }, []);
+
+  const calculateMatch = (drive) => {
+    if (jobMatches[drive.id]) return jobMatches[drive.id];
+    if (!studentProfile) return { matchPercentage: 50, matchTier: 'MODERATE', matchingSkills: [], missingSkills: [], aiRecommendations: [] };
+
+    const studentSkills = new Set((studentProfile.skills || []).map(s => s.toLowerCase()));
+    const driveRole = (drive.role || '').toLowerCase();
+    const driveDesc = (drive.jobDescription || '').toLowerCase();
+
+    let matches = [];
+    let missing = [];
+
+    ['java', 'python', 'react', 'sql', 'dsa', 'c++', 'spring boot', 'html', 'node.js', 'mysql', 'aws', 'docker'].forEach(skill => {
+      if (driveRole.includes(skill) || driveDesc.includes(skill)) {
+        if (studentSkills.has(skill)) {
+          matches.push(skill.toUpperCase());
+        } else {
+          missing.push(skill.toUpperCase());
+        }
+      }
+    });
+
+    let score = 65;
+    if (studentProfile.cgpa && drive.minimumCgpa && Number(studentProfile.cgpa) >= Number(drive.minimumCgpa)) score += 15;
+    if (studentProfile.backlogs === 0) score += 10;
+    if (matches.length > 0) score += Math.min(10, matches.length * 4);
+    score = Math.min(98, Math.max(35, score));
+
+    const tier = score >= 85 ? 'EXCELLENT' : score >= 70 ? 'STRONG' : score >= 50 ? 'MODERATE' : 'LOW';
+    const recs = [];
+    if (missing.length > 0) recs.push(`Add skills (${missing.slice(0, 3).join(', ')}) to your profile to boost your ATS match score.`);
+    if (!studentProfile.resumeUrl) recs.push('Upload your PDF resume to complete candidate ATS evaluation.');
+    if (recs.length === 0) recs.push('Your candidate profile matches this placement drive very well!');
+
+    return { matchPercentage: score, matchTier: tier, matchingSkills: matches, missingSkills: missing, aiRecommendations: recs };
+  };
 
   const evaluateEligibility = (drive) => {
     if (!studentProfile) return { eligible: false, reasons: ['Loading academic details...'], checks: {} };
@@ -170,6 +213,7 @@ const JobDrives = () => {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 24 }}>
           {filteredDrives.map(drive => {
             const { eligible, reasons } = evaluateEligibility(drive);
+            const matchInfo = calculateMatch(drive);
             const applied = hasApplied(drive.id);
             const packageLPA = drive.packageCtc 
               ? (drive.packageCtc / 100000).toFixed(2) + ' LPA'
@@ -195,11 +239,17 @@ const JobDrives = () => {
                         {drive.companyName}
                       </span>
                     </div>
-                    {eligible ? (
-                      <span className="badge badge-success">Eligible</span>
-                    ) : (
-                      <span className="badge badge-danger">Ineligible</span>
-                    )}
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
+                      {eligible ? (
+                        <span className="badge badge-success">Eligible</span>
+                      ) : (
+                        <span className="badge badge-danger">Ineligible</span>
+                      )}
+                      <span className={`badge ${matchInfo.matchPercentage >= 80 ? 'badge-success' : matchInfo.matchPercentage >= 65 ? 'badge-primary' : 'badge-warning'}`} style={{ fontSize: '0.65rem', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                        <Sparkles size={10} />
+                        <span>{matchInfo.matchPercentage}% Match</span>
+                      </span>
+                    </div>
                   </div>
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8, margin: '16px 0', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
@@ -255,6 +305,7 @@ const JobDrives = () => {
       {/* Details Modal */}
       {selectedDrive && (() => {
         const { eligible, reasons, checks } = evaluateEligibility(selectedDrive);
+        const matchInfo = calculateMatch(selectedDrive);
         const applied = hasApplied(selectedDrive.id);
         const packageLPA = selectedDrive.packageCtc 
           ? (selectedDrive.packageCtc / 100000).toFixed(2) + ' LPA'
@@ -285,6 +336,62 @@ const JobDrives = () => {
                       <a href={selectedDrive.companyWebsite} target="_blank" rel="noreferrer" style={{ color: 'var(--primary)', textDecoration: 'none' }}>
                         Visit Website
                       </a>
+                    </div>
+                  )}
+                </div>
+
+                {/* AI ATS Evaluator Panel */}
+                <div style={{ background: '#f8fafc', padding: 16, borderRadius: 10, border: '1px solid var(--border)', marginBottom: 20 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                    <h4 style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.95rem', margin: 0 }}>
+                      <Sparkles size={16} className="text-primary" />
+                      <span>AI ATS Candidate Match Evaluation</span>
+                    </h4>
+                    <span className={`badge ${matchInfo.matchPercentage >= 80 ? 'badge-success' : 'badge-primary'}`} style={{ fontSize: '0.8rem', fontWeight: 700 }}>
+                      {matchInfo.matchPercentage}% ({matchInfo.matchTier} MATCH)
+                    </span>
+                  </div>
+
+                  <div style={{ width: '100%', height: 8, background: 'var(--border)', borderRadius: 4, overflow: 'hidden', marginBottom: 12 }}>
+                    <div style={{ width: `${matchInfo.matchPercentage}%`, height: '100%', background: matchInfo.matchPercentage >= 80 ? 'var(--success)' : 'var(--primary)', transition: 'width 0.5s ease' }} />
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 8, fontSize: '0.8rem' }}>
+                    <div>
+                      <span style={{ fontWeight: 700, color: 'var(--success)', display: 'block', marginBottom: 4 }}>✅ Matching Skills</span>
+                      {matchInfo.matchingSkills && matchInfo.matchingSkills.length > 0 ? (
+                        <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                          {matchInfo.matchingSkills.map((s, i) => (
+                            <span key={i} className="skill-tag" style={{ fontSize: '0.65rem', padding: '2px 6px' }}>{s}</span>
+                          ))}
+                        </div>
+                      ) : (
+                        <span style={{ color: 'var(--text-muted)' }}>None detected</span>
+                      )}
+                    </div>
+
+                    <div>
+                      <span style={{ fontWeight: 700, color: '#d97706', display: 'block', marginBottom: 4 }}>⚡ Suggested Skills Gap</span>
+                      {matchInfo.missingSkills && matchInfo.missingSkills.length > 0 ? (
+                        <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                          {matchInfo.missingSkills.map((s, i) => (
+                            <span key={i} className="badge badge-warning" style={{ fontSize: '0.65rem', padding: '2px 6px' }}>{s}</span>
+                          ))}
+                        </div>
+                      ) : (
+                        <span style={{ color: 'var(--text-muted)' }}>No skill gaps</span>
+                      )}
+                    </div>
+                  </div>
+
+                  {matchInfo.aiRecommendations && matchInfo.aiRecommendations.length > 0 && (
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', paddingTop: 8, borderTop: '1px dashed var(--border)' }}>
+                      <strong>🤖 AI Advice:</strong>
+                      <ul style={{ margin: '4px 0 0 16px', padding: 0 }}>
+                        {matchInfo.aiRecommendations.map((rec, i) => (
+                          <li key={i}>{rec}</li>
+                        ))}
+                      </ul>
                     </div>
                   )}
                 </div>
