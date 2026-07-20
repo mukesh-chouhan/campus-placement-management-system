@@ -11,7 +11,6 @@ import {
   ChevronRight,
   TrendingUp,
   UserCheck,
-  UserCheck,
   Calendar,
   Megaphone,
   XCircle
