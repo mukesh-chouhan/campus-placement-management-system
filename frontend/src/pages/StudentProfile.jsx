@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import API from '../api/api';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
-import { User, Award, BookOpen, GraduationCap } from 'lucide-react';
+import { User, Award, BookOpen, GraduationCap, FileText, Upload, ExternalLink } from 'lucide-react';
 
 const StudentProfile = () => {
   const { updateLocalUser } = useAuth();
@@ -18,6 +18,31 @@ const StudentProfile = () => {
     graduationYear: '',
     skills: ''
   });
+
+  const [uploadingResume, setUploadingResume] = useState(false);
+
+  const handleResumeUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (!file.name.toLowerCase().endsWith('.pdf')) {
+      toast.error('Please select a PDF document file.');
+      return;
+    }
+    const formData = new FormData();
+    formData.append('file', file);
+    setUploadingResume(true);
+    try {
+      const res = await API.post('/api/students/me/resume', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      setProfile(res.data);
+      toast.success('PDF Resume uploaded successfully!');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Error uploading resume.');
+    } finally {
+      setUploadingResume(false);
+    }
+  };
 
   const fetchProfile = async () => {
     try {
@@ -299,6 +324,55 @@ const StudentProfile = () => {
                     No skills listed. Click Edit Profile to add technical tags.
                   </span>
                 )}
+              </div>
+
+              <hr style={{ border: 'none', borderBottom: '1px solid var(--border)' }} />
+
+              {/* PDF Resume Management */}
+              <div>
+                <h3 style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '1.1rem', marginBottom: 16 }}>
+                  <FileText size={18} className="text-primary" />
+                  <span>PDF Student Resume</span>
+                </h3>
+
+                <div style={{ background: 'var(--bg-body)', padding: 20, borderRadius: 10, border: '1px dashed var(--border)', display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  {profile.resumeUrl ? (
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+                      <div>
+                        <span style={{ fontWeight: 700, display: 'block', fontSize: '0.95rem' }}>✅ PDF Resume Uploaded</span>
+                        <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Your resume is attached and accessible to recruiters.</span>
+                      </div>
+                      <a 
+                        href={`https://campus-placement-management-system-v6j0.onrender.com${profile.resumeUrl}`} 
+                        target="_blank" 
+                        rel="noreferrer" 
+                        className="btn btn-secondary btn-sm"
+                        style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+                      >
+                        <ExternalLink size={14} />
+                        <span>View / Download PDF</span>
+                      </a>
+                    </div>
+                  ) : (
+                    <span style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+                      No PDF resume uploaded yet. Upload your latest resume for recruiters.
+                    </span>
+                  )}
+
+                  <div style={{ marginTop: 8 }}>
+                    <label className="btn btn-primary btn-sm" style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                      <Upload size={14} />
+                      <span>{uploadingResume ? 'Uploading PDF...' : profile.resumeUrl ? 'Replace PDF Resume' : 'Upload PDF Resume'}</span>
+                      <input 
+                        type="file" 
+                        accept=".pdf" 
+                        onChange={handleResumeUpload} 
+                        style={{ display: 'none' }}
+                        disabled={uploadingResume}
+                      />
+                    </label>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

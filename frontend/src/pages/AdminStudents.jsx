@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import API from '../api/api';
 import toast from 'react-hot-toast';
-import { Search, Eye, X, BookOpen, Award, User, Plus, Edit, Trash2, ShieldAlert, Download } from 'lucide-react';
+import { Search, Eye, X, BookOpen, Award, User, Plus, Edit, Trash2, ShieldAlert, Download, FileText } from 'lucide-react';
 
 const AdminStudents = () => {
   const [students, setStudents] = useState([]);
@@ -338,6 +338,19 @@ const AdminStudents = () => {
                           <Eye size={14} />
                           <span>Profile</span>
                         </button>
+                        {student.resumeUrl && (
+                          <a 
+                            href={`https://campus-placement-management-system-v6j0.onrender.com${student.resumeUrl}`}
+                            target="_blank" 
+                            rel="noreferrer" 
+                            className="btn btn-primary btn-sm"
+                            style={{ padding: '6px 10px', display: 'flex', alignItems: 'center', gap: 4, textDecoration: 'none' }}
+                            title="View PDF Resume"
+                          >
+                            <FileText size={14} />
+                            <span>Resume</span>
+                          </a>
+                        )}
                         <button 
                           className="btn btn-secondary btn-sm"
                           style={{ padding: '6px' }}

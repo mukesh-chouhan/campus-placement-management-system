@@ -58,4 +58,7 @@ public class Student {
 
     @Column(name = "is_blacklisted")
     private Boolean isBlacklisted = false;
+
+    @Column(name = "resume_url")
+    private String resumeUrl;
 }

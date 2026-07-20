@@ -22,6 +22,7 @@ public class StudentResponse {
     private List<String> skills;
     private String role;
     private Boolean isBlacklisted;
+    private String resumeUrl;
 
     public static StudentResponse fromEntity(Student student) {
         if (student == null) return null;
@@ -36,7 +37,8 @@ public class StudentResponse {
                 student.getGraduationYear(),
                 student.getSkills(),
                 student.getRole().name(),
-                student.getIsBlacklisted() != null ? student.getIsBlacklisted() : false
+                student.getIsBlacklisted() != null ? student.getIsBlacklisted() : false,
+                student.getResumeUrl()
         );
     }
 }

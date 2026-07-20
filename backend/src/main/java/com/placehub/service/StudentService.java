@@ -54,6 +54,33 @@ public class StudentService {
     }
 
     @Transactional
+    public Student uploadResume(org.springframework.web.multipart.MultipartFile file) {
+        Student student = getCurrentStudent();
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("Resume file cannot be empty");
+        }
+        String originalFilename = file.getOriginalFilename();
+        if (originalFilename != null && !originalFilename.toLowerCase().endsWith(".pdf")) {
+            throw new IllegalArgumentException("Only PDF resume files are allowed");
+        }
+
+        try {
+            java.nio.file.Path uploadDir = java.nio.file.Paths.get("uploads", "resumes");
+            if (!java.nio.file.Files.exists(uploadDir)) {
+                java.nio.file.Files.createDirectories(uploadDir);
+            }
+            String filename = "student_" + student.getId() + "_resume.pdf";
+            java.nio.file.Path targetPath = uploadDir.resolve(filename);
+            java.nio.file.Files.copy(file.getInputStream(), targetPath, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+
+            student.setResumeUrl("/api/files/resumes/" + filename);
+            return studentRepository.save(student);
+        } catch (java.io.IOException e) {
+            throw new RuntimeException("Failed to store resume file: " + e.getMessage());
+        }
+    }
+
+    @Transactional
     public Student createStudent(RegisterRequest request) {
         if (studentRepository.existsByEmail(request.getEmail())) {
             throw new IllegalArgumentException("Email already exists");

@@ -39,6 +39,12 @@ public class StudentController {
         return ResponseEntity.ok(StudentResponse.fromEntity(student));
     }
 
+    @PostMapping("/me/resume")
+    public ResponseEntity<StudentResponse> uploadResume(@RequestParam("file") org.springframework.web.multipart.MultipartFile file) {
+        Student student = studentService.uploadResume(file);
+        return ResponseEntity.ok(StudentResponse.fromEntity(student));
+    }
+
     @GetMapping("/dashboard")
     public ResponseEntity<Map<String, Object>> getDashboardStats() {
         Student student = studentService.getCurrentStudent();

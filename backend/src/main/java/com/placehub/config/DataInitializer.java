@@ -69,7 +69,8 @@ public class DataInitializer implements CommandLineRunner {
                     2026,
                     List.of("Java", "Spring Boot", "React", "MySQL"),
                     UserRole.STUDENT,
-                    false
+                    false,
+                    null
             );
 
             Student student2 = new Student(
@@ -84,7 +85,8 @@ public class DataInitializer implements CommandLineRunner {
                     2026,
                     List.of("Python", "Machine Learning", "React"),
                     UserRole.STUDENT,
-                    false
+                    false,
+                    null
             );
 
             Student student3 = new Student(
@@ -99,7 +101,8 @@ public class DataInitializer implements CommandLineRunner {
                     2026,
                     List.of("AutoCAD", "MATLAB"),
                     UserRole.STUDENT,
-                    false
+                    false,
+                    null
             );
 
             studentRepository.saveAll(List.of(student1, student2, student3));

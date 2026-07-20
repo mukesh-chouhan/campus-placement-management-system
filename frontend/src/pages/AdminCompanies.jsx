@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import API from '../api/api';
 import toast from 'react-hot-toast';
-import { Search, Plus, Edit, Trash2, X, Globe, MapPin } from 'lucide-react';
+import { Search, Plus, Edit, Trash2, X, Globe, MapPin, Download } from 'lucide-react';
 
 const AdminCompanies = () => {
   const [companies, setCompanies] = useState([]);
@@ -91,6 +91,30 @@ const AdminCompanies = () => {
     }
   };
 
+  const exportCompaniesCSV = () => {
+    if (companies.length === 0) {
+      toast.error('No company data to export.');
+      return;
+    }
+    const headers = ['Company ID', 'Company Name', 'Location', 'Website URL'];
+    const rows = filteredCompanies.map(c => [
+      c.id,
+      `"${c.companyName || ''}"`,
+      `"${c.location || ''}"`,
+      `"${c.website || ''}"`
+    ]);
+
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `company_reports_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success('Companies CSV exported successfully!');
+  };
+
   const filteredCompanies = companies.filter(company =>
     company.companyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (company.location && company.location.toLowerCase().includes(searchTerm.toLowerCase()))
@@ -112,10 +136,16 @@ const AdminCompanies = () => {
           <h1>Recruiter Companies</h1>
           <span className="header-subtitle">Manage employer profiles, website URLs, and hiring hubs.</span>
         </div>
-        <button className="btn btn-primary" onClick={handleOpenAddModal}>
-          <Plus size={18} />
-          <span>Add Company</span>
-        </button>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button className="btn btn-secondary" onClick={exportCompaniesCSV}>
+            <Download size={16} />
+            <span>Export CSV</span>
+          </button>
+          <button className="btn btn-primary" onClick={handleOpenAddModal}>
+            <Plus size={18} />
+            <span>Add Company</span>
+          </button>
+        </div>
       </div>
 
 
