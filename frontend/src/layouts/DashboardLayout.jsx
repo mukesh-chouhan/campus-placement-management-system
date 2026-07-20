@@ -124,13 +124,23 @@ const DashboardLayout = () => {
     );
   };
 
+  const handleLogoClick = () => {
+    if (isAdmin) {
+      navigate('/admin/dashboard');
+    } else if (isStudent) {
+      navigate('/dashboard');
+    } else {
+      navigate('/login');
+    }
+  };
+
   return (
     <div className="app-container">
       {/* Mobile Top Header */}
       <header className="mobile-header-bar">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div onClick={handleLogoClick} style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }} title="Go to Dashboard">
           <div className="sidebar-logo" style={{ width: 28, height: 28, fontSize: '0.9rem', borderRadius: 5 }}>P</div>
-          <span style={{ fontSize: '1rem', fontWeight: 0, color: 'var(--text-main)', letterSpacing: '-0.02em' }}> </span>
+          <span style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-main)', letterSpacing: '-0.02em' }}>PLACEHUB</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <button 
@@ -144,7 +154,7 @@ const DashboardLayout = () => {
 
       {/* Main Sidebar (Desktop / Collapsible) */}
       <aside className={`sidebar ${sidebarCollapsed ? "collapsed" : ""} ${mobileMenuOpen ? "show" : ""}`}>
-        <div className="sidebar-brand">
+        <div className="sidebar-brand" onClick={handleLogoClick} style={{ cursor: 'pointer' }} title="Go to Dashboard">
           <div className="sidebar-logo">P</div>
           <span className="brand-text">PLACEHUB</span>
         </div>
