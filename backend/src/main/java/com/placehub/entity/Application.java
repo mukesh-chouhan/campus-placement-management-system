@@ -34,4 +34,9 @@ public class Application {
 
     @Column(name = "applied_date")
     private LocalDateTime appliedDate = LocalDateTime.now();
+
+    private Integer rating;
+
+    @Column(name = "admin_notes", columnDefinition = "TEXT")
+    private String adminNotes;
 }

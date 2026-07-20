@@ -1,10 +1,14 @@
 package com.placehub.controller;
 
+import com.placehub.dto.request.AnnouncementRequest;
 import com.placehub.dto.request.ApplicationStatusRequest;
+import com.placehub.dto.request.ApplicationUpdateRequest;
 import com.placehub.dto.request.CompanyRequest;
 import com.placehub.dto.request.JobDriveRequest;
 import com.placehub.dto.request.ProfileUpdateRequest;
 import com.placehub.dto.request.RegisterRequest;
+import com.placehub.entity.Announcement;
+import com.placehub.service.AnnouncementService;
 import com.placehub.service.StudentService;
 import com.placehub.dto.response.ApplicationResponse;
 import com.placehub.dto.response.JobDriveResponse;
@@ -47,6 +51,7 @@ public class AdminController {
     private final JobDriveRepository jobDriveRepository;
     private final ApplicationRepository applicationRepository;
     private final StudentService studentService;
+    private final AnnouncementService announcementService;
 
     // --- Company CRUD ---
     @PostMapping("/companies")
@@ -122,6 +127,14 @@ public class AdminController {
         return ResponseEntity.ok(ApplicationResponse.fromEntity(app));
     }
 
+    @PutMapping("/applications/{id}")
+    public ResponseEntity<ApplicationResponse> updateApplicationDetails(
+            @PathVariable Long id,
+            @RequestBody ApplicationUpdateRequest request) {
+        Application app = applicationService.updateApplicationDetails(id, request.getStatus(), request.getRating(), request.getAdminNotes());
+        return ResponseEntity.ok(ApplicationResponse.fromEntity(app));
+    }
+
     // --- Students List ---
     @GetMapping("/students")
     public ResponseEntity<List<StudentResponse>> getAllStudents() {
@@ -147,6 +160,38 @@ public class AdminController {
     @DeleteMapping("/students/{id}")
     public ResponseEntity<Void> deleteStudent(@PathVariable Long id) {
         studentService.deleteStudent(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/students/{id}/blacklist")
+    public ResponseEntity<StudentResponse> toggleStudentBlacklist(@PathVariable Long id) {
+        Student student = studentService.toggleBlacklist(id);
+        return ResponseEntity.ok(StudentResponse.fromEntity(student));
+    }
+
+    // --- Announcements CRUD ---
+    @GetMapping("/announcements")
+    public ResponseEntity<List<Announcement>> getAllAnnouncements() {
+        return ResponseEntity.ok(announcementService.getAllAnnouncements());
+    }
+
+    @PostMapping("/announcements")
+    public ResponseEntity<Announcement> createAnnouncement(@Valid @RequestBody AnnouncementRequest request) {
+        Announcement announcement = announcementService.createAnnouncement(request);
+        return new ResponseEntity<>(announcement, HttpStatus.CREATED);
+    }
+
+    @PutMapping("/announcements/{id}")
+    public ResponseEntity<Announcement> updateAnnouncement(
+            @PathVariable Long id,
+            @Valid @RequestBody AnnouncementRequest request) {
+        Announcement announcement = announcementService.updateAnnouncement(id, request);
+        return ResponseEntity.ok(announcement);
+    }
+
+    @DeleteMapping("/announcements/{id}")
+    public ResponseEntity<Void> deleteAnnouncement(@PathVariable Long id) {
+        announcementService.deleteAnnouncement(id);
         return ResponseEntity.noContent().build();
     }
 

@@ -25,9 +25,14 @@ public class ApplicationService {
     private final JobDriveRepository jobDriveRepository;
     private final StudentRepository studentRepository;
     private final EligibilityService eligibilityService;
+    private final EmailService emailService;
 
     @Transactional
     public Application applyForJob(Student student, Long jobId) {
+        if (Boolean.TRUE.equals(student.getIsBlacklisted())) {
+            throw new IllegalStateException("Your account has been blacklisted by the placement administration.");
+        }
+
         JobDrive jobDrive = jobDriveRepository.findById(jobId)
                 .orElseThrow(() -> new ResourceNotFoundException("Job drive not found with ID: " + jobId));
 
@@ -72,6 +77,48 @@ public class ApplicationService {
     public Application updateApplicationStatus(Long id, ApplicationStatus status) {
         Application application = getApplicationById(id);
         application.setStatus(status);
-        return applicationRepository.save(application);
+        Application saved = applicationRepository.save(application);
+
+        if (saved.getStudent() != null && saved.getJobDrive() != null) {
+            String companyName = saved.getJobDrive().getCompany() != null ? saved.getJobDrive().getCompany().getCompanyName() : "Company";
+            emailService.sendApplicationStatusNotification(
+                    saved.getStudent().getEmail(),
+                    saved.getStudent().getName(),
+                    companyName,
+                    saved.getJobDrive().getRole(),
+                    status.name()
+            );
+        }
+        return saved;
+    }
+
+    @Transactional
+    public Application updateApplicationDetails(Long id, ApplicationStatus status, Integer rating, String adminNotes) {
+        Application application = getApplicationById(id);
+        if (status != null) application.setStatus(status);
+        if (rating != null) application.setRating(rating);
+        if (adminNotes != null) application.setAdminNotes(adminNotes);
+        Application saved = applicationRepository.save(application);
+
+        if (status != null && saved.getStudent() != null && saved.getJobDrive() != null) {
+            String companyName = saved.getJobDrive().getCompany() != null ? saved.getJobDrive().getCompany().getCompanyName() : "Company";
+            emailService.sendApplicationStatusNotification(
+                    saved.getStudent().getEmail(),
+                    saved.getStudent().getName(),
+                    companyName,
+                    saved.getJobDrive().getRole(),
+                    status.name()
+            );
+        }
+        return saved;
+    }
+
+    @Transactional
+    public void withdrawApplication(Long id, Student student) {
+        Application application = getApplicationById(id);
+        if (!application.getStudent().getId().equals(student.getId())) {
+            throw new IllegalArgumentException("You can only withdraw your own applications.");
+        }
+        applicationRepository.delete(application);
     }
 }

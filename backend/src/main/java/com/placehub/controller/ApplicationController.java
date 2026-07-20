@@ -39,4 +39,11 @@ public class ApplicationController {
                 .collect(Collectors.toList());
         return ResponseEntity.ok(response);
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> withdrawApplication(@PathVariable Long id) {
+        Student student = studentService.getCurrentStudent();
+        applicationService.withdrawApplication(id, student);
+        return ResponseEntity.noContent().build();
+    }
 }

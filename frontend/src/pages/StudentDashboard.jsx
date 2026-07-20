@@ -11,7 +11,10 @@ import {
   ChevronRight,
   TrendingUp,
   UserCheck,
-  Calendar
+  UserCheck,
+  Calendar,
+  Megaphone,
+  XCircle
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -30,19 +33,23 @@ const StudentDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [applyStates, setApplyStates] = useState({});
 
+  const [announcements, setAnnouncements] = useState([]);
+
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [statsRes, profileRes, drivesRes, appsRes] = await Promise.all([
+      const [statsRes, profileRes, drivesRes, appsRes, announcementsRes] = await Promise.all([
         API.get('/api/students/dashboard'),
         API.get('/api/students/me'),
         API.get('/api/jobs'),
-        API.get('/api/applications/me')
+        API.get('/api/applications/me'),
+        API.get('/api/announcements')
       ]);
       setStats(statsRes.data);
       setStudentProfile(profileRes.data);
       setActiveDrives(drivesRes.data);
       setApplications(appsRes.data);
+      setAnnouncements(announcementsRes.data);
     } catch (err) {
       console.error('Error fetching student dashboard data:', err);
     } finally {
@@ -106,6 +113,17 @@ const StudentDashboard = () => {
     }
   };
 
+  const handleWithdraw = async (appId) => {
+    if (!window.confirm('Are you sure you want to withdraw this job application?')) return;
+    try {
+      await API.delete(`/api/applications/${appId}`);
+      toast.success('Application withdrawn successfully!');
+      fetchData();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Error withdrawing application.');
+    }
+  };
+
   // Profile completion calculator
   const calculateProfileCompletion = () => {
     if (!studentProfile) return 0;
@@ -163,6 +181,27 @@ const StudentDashboard = () => {
           <span className="header-subtitle">Your Career Dashboard &bull; Check active hiring drives and track recruitment.</span>
         </div>
       </div>
+
+      {/* Campus Announcements / Notice Board Banner */}
+      {announcements.length > 0 && (
+        <motion.div 
+          className="content-card" 
+          style={{ marginBottom: 24, borderLeft: '4px solid var(--primary)', background: 'linear-gradient(to right, #eff6ff, #ffffff)' }}
+          variants={itemVariants}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+            <Megaphone size={20} className="text-primary" />
+            <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700 }}>Campus Placement Notice Board</h3>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 12 }}>
+            {announcements.slice(0, 3).map(item => (
+              <div key={item.id} style={{ padding: '8px 12px', background: '#ffffff', borderRadius: 8, border: '1px solid var(--border)', fontSize: '0.875rem' }}>
+                <strong style={{ color: 'var(--primary)' }}>[{item.category}] {item.title}:</strong> {item.content}
+              </div>
+            ))}
+          </div>
+        </motion.div>
+      )}
 
       {/* Grid Counters */}
       <div className="dashboard-grid">
@@ -364,9 +403,21 @@ const StudentDashboard = () => {
                       <span style={{ fontWeight: 700, fontSize: '0.85rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{app.companyName}</span>
                       <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{app.role}</span>
                     </div>
-                    <span className={`badge badge-${app.status === 'SELECTED' ? 'success' : app.status === 'REJECTED' ? 'danger' : 'warning'}`} style={{ fontSize: '0.65rem' }}>
-                      {app.status}
-                    </span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span className={`badge badge-${app.status === 'SELECTED' ? 'success' : app.status === 'REJECTED' ? 'danger' : 'warning'}`} style={{ fontSize: '0.65rem' }}>
+                        {app.status}
+                      </span>
+                      {app.status === 'APPLIED' && (
+                        <button
+                          className="btn btn-secondary btn-sm"
+                          style={{ padding: '2px 6px', fontSize: '0.7rem' }}
+                          onClick={() => handleWithdraw(app.id)}
+                          title="Withdraw Application"
+                        >
+                          <XCircle size={12} />
+                        </button>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>

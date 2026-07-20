@@ -18,7 +18,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Sun,
-  Moon
+  Moon,
+  Megaphone
 } from 'lucide-react';
 import "./DashboardLayout.css";
 
@@ -191,6 +192,10 @@ const DashboardLayout = () => {
               <NavLink to="/admin/students" onClick={() => setMobileMenuOpen(false)} className={({ isActive }) => `menu-item ${isActive ? 'active' : ''}`} title="Students">
                 <Users size={18} />
                 <span className="menu-text">Students</span>
+              </NavLink>
+              <NavLink to="/admin/announcements" onClick={() => setMobileMenuOpen(false)} className={({ isActive }) => `menu-item ${isActive ? 'active' : ''}`} title="Announcements">
+                <Megaphone size={18} />
+                <span className="menu-text">Announcements</span>
               </NavLink>
               <NavLink to="/admin/analytics" onClick={() => setMobileMenuOpen(false)} className={({ isActive }) => `menu-item ${isActive ? 'active' : ''}`} title="Analytics">
                 <BarChart3 size={18} />

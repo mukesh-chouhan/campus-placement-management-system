@@ -19,6 +19,7 @@ import AdminCompanies from './pages/AdminCompanies';
 import AdminJobDrives from './pages/AdminJobDrives';
 import AdminApplications from './pages/AdminApplications';
 import AdminStudents from './pages/AdminStudents';
+import AdminAnnouncements from './pages/AdminAnnouncements';
 import AdminAnalytics from './pages/AdminAnalytics';
 import ErrorPage from './pages/ErrorPage';
 
@@ -122,6 +123,7 @@ function App() {
             <Route path="drives" element={<AdminJobDrives />} />
             <Route path="applications" element={<AdminApplications />} />
             <Route path="students" element={<AdminStudents />} />
+            <Route path="announcements" element={<AdminAnnouncements />} />
             <Route path="analytics" element={<AdminAnalytics />} />
           </Route>
 

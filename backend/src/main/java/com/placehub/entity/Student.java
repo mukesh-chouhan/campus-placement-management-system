@@ -55,4 +55,7 @@ public class Student {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private UserRole role = UserRole.STUDENT;
+
+    @Column(name = "is_blacklisted")
+    private Boolean isBlacklisted = false;
 }

@@ -113,4 +113,12 @@ public class StudentService {
         
         studentRepository.delete(student);
     }
+
+    @Transactional
+    public Student toggleBlacklist(Long id) {
+        Student student = studentRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Student not found"));
+        student.setIsBlacklisted(student.getIsBlacklisted() == null || !student.getIsBlacklisted());
+        return studentRepository.save(student);
+    }
 }

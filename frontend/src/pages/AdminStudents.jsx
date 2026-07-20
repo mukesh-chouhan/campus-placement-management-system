@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import API from '../api/api';
 import toast from 'react-hot-toast';
-import { Search, Eye, X, BookOpen, Award, User, Plus, Edit, Trash2 } from 'lucide-react';
+import { Search, Eye, X, BookOpen, Award, User, Plus, Edit, Trash2, ShieldAlert, Download } from 'lucide-react';
 
 const AdminStudents = () => {
   const [students, setStudents] = useState([]);
@@ -160,6 +160,50 @@ const AdminStudents = () => {
     }
   };
 
+  const handleToggleBlacklist = async (id, name, currentStatus) => {
+    const actionText = currentStatus ? 'unblacklist' : 'blacklist';
+    if (!window.confirm(`Are you sure you want to ${actionText} student ${name}?`)) {
+      return;
+    }
+    try {
+      await API.put(`/api/admin/students/${id}/blacklist`);
+      toast.success(`Student ${name} ${actionText}ed successfully!`);
+      fetchStudents();
+    } catch (err) {
+      toast.error(err.response?.data?.message || `Error toggling blacklist status.`);
+    }
+  };
+
+  const exportStudentsCSV = () => {
+    if (students.length === 0) {
+      toast.error('No student data to export.');
+      return;
+    }
+    const headers = ['ID', 'Roll Number', 'Full Name', 'Email', 'Branch', 'CGPA', 'Backlogs', 'Graduation Year', 'Blacklisted', 'Skills'];
+    const rows = filteredStudents.map(s => [
+      s.id,
+      `"${s.rollNumber || ''}"`,
+      `"${s.name || ''}"`,
+      `"${s.email || ''}"`,
+      `"${s.branch || ''}"`,
+      s.cgpa || 0,
+      s.backlogs || 0,
+      s.graduationYear || '',
+      s.isBlacklisted ? 'YES' : 'NO',
+      `"${s.skills ? s.skills.join(', ') : ''}"`
+    ]);
+
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `students_export_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success('Students CSV exported successfully!');
+  };
+
   const filteredStudents = students.filter(student => {
     const matchesSearch = 
       student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -192,10 +236,16 @@ const AdminStudents = () => {
           <h1>Student Records</h1>
           <span className="header-subtitle">View profiles, cumulative CGPA, and backlog details for campus candidate verification.</span>
         </div>
-        <button className="btn btn-primary" onClick={handleOpenAddModal}>
-          <Plus size={18} />
-          <span>Add Student</span>
-        </button>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button className="btn btn-secondary" onClick={exportStudentsCSV}>
+            <Download size={16} />
+            <span>Export CSV</span>
+          </button>
+          <button className="btn btn-primary" onClick={handleOpenAddModal}>
+            <Plus size={18} />
+            <span>Add Student</span>
+          </button>
+        </div>
       </div>
 
       {/* Filter Row */}
@@ -258,7 +308,14 @@ const AdminStudents = () => {
                 {filteredStudents.map(student => (
                   <tr key={student.id}>
                     <td style={{ fontWeight: 700 }}>{student.rollNumber}</td>
-                    <td style={{ fontWeight: 600 }}>{student.name}</td>
+                    <td style={{ fontWeight: 600 }}>
+                      {student.name}
+                      {student.isBlacklisted && (
+                        <span className="badge badge-danger" style={{ marginLeft: 8, fontSize: '0.65rem', textTransform: 'uppercase' }}>
+                          Blacklisted
+                        </span>
+                      )}
+                    </td>
                     <td>{student.branch}</td>
                     <td style={{ fontWeight: 800, color: 'var(--primary)' }}>
                       {student.cgpa ? Number(student.cgpa).toFixed(2) : 'N/A'}
@@ -271,7 +328,7 @@ const AdminStudents = () => {
                     </td>
                     <td>{student.graduationYear}</td>
                     <td>
-                      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                      <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                         <button 
                           className="btn btn-secondary btn-sm"
                           style={{ padding: '6px', display: 'flex', alignItems: 'center', gap: 4 }}
@@ -288,6 +345,14 @@ const AdminStudents = () => {
                           title="Edit Student"
                         >
                           <Edit size={14} />
+                        </button>
+                        <button 
+                          className={`btn ${student.isBlacklisted ? 'btn-success' : 'btn-warning'} btn-sm`}
+                          style={{ padding: '6px' }}
+                          onClick={() => handleToggleBlacklist(student.id, student.name, student.isBlacklisted)}
+                          title={student.isBlacklisted ? 'Unblacklist Student' : 'Blacklist Student'}
+                        >
+                          <ShieldAlert size={14} />
                         </button>
                         <button 
                           className="btn btn-danger btn-sm"

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import API from '../api/api';
 import toast from 'react-hot-toast';
-import { Search, Edit, X, RefreshCw, CheckCircle, XCircle } from 'lucide-react';
+import { Search, Edit, X, Download, Star } from 'lucide-react';
 
 const AdminApplications = () => {
   const [applications, setApplications] = useState([]);
@@ -13,10 +13,12 @@ const AdminApplications = () => {
   const [companyFilter, setCompanyFilter] = useState('ALL');
   const [statusFilter, setStatusFilter] = useState('ALL');
 
-  // Status Change Modal
+  // Status & Notes Edit Modal
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedApp, setSelectedApp] = useState(null);
   const [newStatus, setNewStatus] = useState('');
+  const [rating, setRating] = useState(0);
+  const [adminNotes, setAdminNotes] = useState('');
   
   const [actionLoading, setActionLoading] = useState(false);
 
@@ -52,6 +54,8 @@ const AdminApplications = () => {
   const handleOpenStatusModal = (app) => {
     setSelectedApp(app);
     setNewStatus(app.status);
+    setRating(app.rating || 0);
+    setAdminNotes(app.adminNotes || '');
     setIsModalOpen(true);
   };
 
@@ -59,17 +63,53 @@ const AdminApplications = () => {
     e.preventDefault();
     setActionLoading(true);
     try {
-      await API.put(`/api/admin/applications/${selectedApp.id}/status`, { status: newStatus });
-      toast.success(`Application status updated to ${newStatus} successfully!`);
+      await API.put(`/api/admin/applications/${selectedApp.id}`, { 
+        status: newStatus,
+        rating,
+        adminNotes
+      });
+      toast.success(`Application updated successfully!`);
       setIsModalOpen(false);
       // Refresh list
       const appsRes = await API.get('/api/admin/applications');
       setApplications(appsRes.data);
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Error updating status.');
+      toast.error(err.response?.data?.message || 'Error updating application.');
     } finally {
       setActionLoading(false);
     }
+  };
+
+  const exportApplicationsCSV = () => {
+    if (applications.length === 0) {
+      toast.error('No application data to export.');
+      return;
+    }
+    const headers = ['App ID', 'Student Name', 'Roll Number', 'Branch', 'CGPA', 'Company', 'Role', 'Package CTC', 'Status', 'Rating', 'Admin Notes', 'Applied Date'];
+    const rows = filteredApps.map(a => [
+      a.id,
+      `"${a.studentName || ''}"`,
+      `"${a.studentRollNumber || ''}"`,
+      `"${a.studentBranch || ''}"`,
+      a.studentCgpa || 0,
+      `"${a.companyName || ''}"`,
+      `"${a.role || ''}"`,
+      a.packageCtc || 0,
+      a.status,
+      a.rating || 0,
+      `"${a.adminNotes || ''}"`,
+      `"${a.appliedDate ? new Date(a.appliedDate).toLocaleDateString() : ''}"`
+    ]);
+
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `applications_export_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success('Applications CSV exported successfully!');
   };
 
   // Filter application list
@@ -101,6 +141,10 @@ const AdminApplications = () => {
           <h1>Student Applications</h1>
           <span className="header-subtitle">Review incoming application profiles and progress candidates across recruitment milestones.</span>
         </div>
+        <button className="btn btn-secondary" onClick={exportApplicationsCSV}>
+          <Download size={16} />
+          <span>Export CSV</span>
+        </button>
       </div>
 
 
@@ -217,12 +261,12 @@ const AdminApplications = () => {
         )}
       </div>
 
-      {/* Transition Modal */}
+      {/* Transition & Edit Modal */}
       {isModalOpen && selectedApp && (
         <div className="modal-backdrop" onClick={() => setIsModalOpen(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>Transition Candidate Stage</h3>
+              <h3>Edit Candidate Application</h3>
               <button className="btn-close" onClick={() => setIsModalOpen(false)}>
                 <X size={20} />
               </button>
@@ -236,7 +280,7 @@ const AdminApplications = () => {
                 </div>
 
                 <div className="form-group">
-                  <label htmlFor="newStatus">New Recruitment Stage</label>
+                  <label htmlFor="newStatus">Recruitment Stage</label>
                   <select
                     id="newStatus"
                     className="form-control"
@@ -248,6 +292,35 @@ const AdminApplications = () => {
                       <option key={opt} value={opt}>{opt}</option>
                     ))}
                   </select>
+                </div>
+
+                <div className="form-group">
+                  <label>Candidate Evaluation Rating (1-5 Stars)</label>
+                  <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+                    {[1, 2, 3, 4, 5].map(star => (
+                      <button
+                        key={star}
+                        type="button"
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}
+                        onClick={() => setRating(star)}
+                      >
+                        <Star size={24} fill={star <= rating ? '#eab308' : 'none'} color={star <= rating ? '#eab308' : '#94a3b8'} />
+                      </button>
+                    ))}
+                    {rating > 0 && <span style={{ marginLeft: 8, fontSize: '0.85rem', color: 'var(--text-muted)', alignSelf: 'center' }}>{rating} Stars</span>}
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="adminNotes">Admin Evaluation & Interview Notes</label>
+                  <textarea
+                    id="adminNotes"
+                    className="form-control"
+                    rows="3"
+                    value={adminNotes}
+                    onChange={(e) => setAdminNotes(e.target.value)}
+                    placeholder="Enter private interview notes, technical score, or feedback..."
+                  ></textarea>
                 </div>
               </div>
 
@@ -264,7 +337,7 @@ const AdminApplications = () => {
                   className="btn btn-primary"
                   disabled={actionLoading}
                 >
-                  {actionLoading ? 'Transitioning...' : 'Update Stage'}
+                  {actionLoading ? 'Saving...' : 'Save Updates'}
                 </button>
               </div>
             </form>

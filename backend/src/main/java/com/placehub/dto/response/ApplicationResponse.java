@@ -24,6 +24,8 @@ public class ApplicationResponse {
     private BigDecimal packageCtc;
     private String status;
     private LocalDateTime appliedDate;
+    private Integer rating;
+    private String adminNotes;
 
     public static ApplicationResponse fromEntity(Application app) {
         if (app == null) return null;
@@ -40,7 +42,9 @@ public class ApplicationResponse {
                 app.getJobDrive() != null ? app.getJobDrive().getRole() : null,
                 app.getJobDrive() != null ? app.getJobDrive().getPackageCtc() : null,
                 app.getStatus().name(),
-                app.getAppliedDate()
+                app.getAppliedDate(),
+                app.getRating(),
+                app.getAdminNotes()
         );
     }
 }
