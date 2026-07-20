@@ -26,4 +26,8 @@ public class ProfileUpdateRequest {
 
     private Integer graduationYear;
     private List<String> skills;
+    private String experiencesJson;
+    private String projectsJson;
+    private String skillCategoriesJson;
+    private String accomplishmentsJson;
 }

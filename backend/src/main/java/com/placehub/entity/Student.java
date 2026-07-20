@@ -61,4 +61,20 @@ public class Student {
 
     @Column(name = "resume_url")
     private String resumeUrl;
+
+    @Lob
+    @Column(name = "experiences_json", columnDefinition = "LONGTEXT")
+    private String experiencesJson;
+
+    @Lob
+    @Column(name = "projects_json", columnDefinition = "LONGTEXT")
+    private String projectsJson;
+
+    @Lob
+    @Column(name = "skill_categories_json", columnDefinition = "LONGTEXT")
+    private String skillCategoriesJson;
+
+    @Lob
+    @Column(name = "accomplishments_json", columnDefinition = "LONGTEXT")
+    private String accomplishmentsJson;
 }

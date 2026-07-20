@@ -49,6 +49,10 @@ public class StudentService {
         student.setBacklogs(request.getBacklogs());
         student.setGraduationYear(request.getGraduationYear());
         student.setSkills(request.getSkills());
+        if (request.getExperiencesJson() != null) student.setExperiencesJson(request.getExperiencesJson());
+        if (request.getProjectsJson() != null) student.setProjectsJson(request.getProjectsJson());
+        if (request.getSkillCategoriesJson() != null) student.setSkillCategoriesJson(request.getSkillCategoriesJson());
+        if (request.getAccomplishmentsJson() != null) student.setAccomplishmentsJson(request.getAccomplishmentsJson());
 
         return studentRepository.save(student);
     }

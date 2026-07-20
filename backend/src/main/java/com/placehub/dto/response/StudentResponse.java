@@ -23,6 +23,10 @@ public class StudentResponse {
     private String role;
     private Boolean isBlacklisted;
     private String resumeUrl;
+    private String experiencesJson;
+    private String projectsJson;
+    private String skillCategoriesJson;
+    private String accomplishmentsJson;
 
     public static StudentResponse fromEntity(Student student) {
         if (student == null) return null;
@@ -38,7 +42,11 @@ public class StudentResponse {
                 student.getSkills(),
                 student.getRole().name(),
                 student.getIsBlacklisted() != null ? student.getIsBlacklisted() : false,
-                student.getResumeUrl()
+                student.getResumeUrl(),
+                student.getExperiencesJson(),
+                student.getProjectsJson(),
+                student.getSkillCategoriesJson(),
+                student.getAccomplishmentsJson()
         );
     }
 }
