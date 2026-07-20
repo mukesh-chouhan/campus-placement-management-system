@@ -19,7 +19,8 @@ import {
   ChevronRight,
   Sun,
   Moon,
-  Megaphone
+  Megaphone,
+  ChevronDown
 } from 'lucide-react';
 import "./DashboardLayout.css";
 
@@ -64,11 +65,18 @@ const DashboardLayout = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // Close notifications dropdown on click outside
+  // Profile Dropdown state
+  const [profileOpen, setProfileOpen] = useState(false);
+  const profileRef = useRef(null);
+
+  // Close dropdowns on click outside
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (notifRef.current && !notifRef.current.contains(e.target)) {
         setNotifOpen(false);
+      }
+      if (profileRef.current && !profileRef.current.contains(e.target)) {
+        setProfileOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -328,14 +336,79 @@ const DashboardLayout = () => {
               </AnimatePresence>
             </div>
 
-            {/* Academic User Tag */}
-            <div className="user-header">
-              <div className="user-header-avatar">
-                {getInitials(user?.name)}
+            {/* Interactive User Profile Header Dropdown */}
+            <div className="profile-wrapper" ref={profileRef}>
+              <div 
+                className="user-header" 
+                onClick={() => setProfileOpen(!profileOpen)}
+                style={{ cursor: 'pointer', userSelect: 'none' }}
+                title="User Profile & Settings"
+              >
+                <div className="user-header-avatar">
+                  {getInitials(user?.name)}
+                </div>
+                <span className="header-username">
+                  {user?.name}
+                </span>
+                <ChevronDown size={14} style={{ color: 'var(--text-muted)', marginLeft: 2 }} />
               </div>
-              <span className="header-username">
-                {user?.name}
-              </span>
+
+              <AnimatePresence>
+                {profileOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                    transition={{ duration: 0.15 }}
+                    className="profile-dropdown"
+                  >
+                    <div className="profile-dropdown-header">
+                      <div className="user-header-avatar" style={{ width: 34, height: 34, fontSize: '0.85rem' }}>
+                        {getInitials(user?.name)}
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                        <span style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--text-main)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {user?.name}
+                        </span>
+                        <span style={{ fontSize: '0.725rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {user?.email}
+                        </span>
+                        <span className="badge badge-primary" style={{ fontSize: '0.6rem', padding: '2px 6px', alignSelf: 'flex-start', marginTop: 3 }}>
+                          {user?.role}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="profile-dropdown-menu">
+                      <button 
+                        className="profile-dropdown-item"
+                        onClick={() => {
+                          setProfileOpen(false);
+                          if (isStudent) {
+                            navigate('/profile');
+                          } else {
+                            navigate('/admin/students');
+                          }
+                        }}
+                      >
+                        <User size={16} />
+                        <span>Profile</span>
+                      </button>
+
+                      <button 
+                        className="profile-dropdown-item text-danger"
+                        onClick={() => {
+                          setProfileOpen(false);
+                          handleLogout();
+                        }}
+                      >
+                        <LogOut size={16} />
+                        <span>Log Out</span>
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </div>
         </header>
