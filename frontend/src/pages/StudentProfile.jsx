@@ -376,55 +376,6 @@ const StudentProfile = () => {
                   </span>
                 )}
               </div>
-
-              <hr style={{ border: 'none', borderBottom: '1px solid var(--border)' }} />
-
-              {/* PDF Resume Management */}
-              <div>
-                <h3 style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '1.1rem', marginBottom: 16 }}>
-                  <FileText size={18} className="text-primary" />
-                  <span>PDF Student Resume</span>
-                </h3>
-
-                <div style={{ background: 'var(--bg-body)', padding: 20, borderRadius: 10, border: '1px dashed var(--border)', display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  {profile.resumeUrl ? (
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
-                      <div>
-                        <span style={{ fontWeight: 700, display: 'block', fontSize: '0.95rem' }}>✅ PDF Resume Uploaded</span>
-                        <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Your resume is attached and accessible to recruiters.</span>
-                      </div>
-                      <a 
-                        href={`https://campus-placement-management-system-v6j0.onrender.com${profile.resumeUrl}`} 
-                        target="_blank" 
-                        rel="noreferrer" 
-                        className="btn btn-secondary btn-sm"
-                        style={{ display: 'flex', alignItems: 'center', gap: 6 }}
-                      >
-                        <ExternalLink size={14} />
-                        <span>View / Download PDF</span>
-                      </a>
-                    </div>
-                  ) : (
-                    <span style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>
-                      No PDF resume uploaded yet. Upload your latest resume for recruiters.
-                    </span>
-                  )}
-
-                  <div style={{ marginTop: 8 }}>
-                    <label className="btn btn-primary btn-sm" style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                      <Upload size={14} />
-                      <span>{uploadingResume ? 'Uploading PDF...' : profile.resumeUrl ? 'Replace PDF Resume' : 'Upload PDF Resume'}</span>
-                      <input 
-                        type="file" 
-                        accept=".pdf" 
-                        onChange={handleResumeUpload} 
-                        style={{ display: 'none' }}
-                        disabled={uploadingResume}
-                      />
-                    </label>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         )}
