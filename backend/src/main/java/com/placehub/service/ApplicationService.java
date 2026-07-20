@@ -5,6 +5,7 @@ import com.placehub.entity.Application;
 import com.placehub.entity.JobDrive;
 import com.placehub.entity.Student;
 import com.placehub.enums.ApplicationStatus;
+import com.placehub.exception.BlacklistedUserException;
 import com.placehub.exception.DuplicateApplicationException;
 import com.placehub.exception.EligibilityException;
 import com.placehub.exception.ResourceNotFoundException;
@@ -30,7 +31,7 @@ public class ApplicationService {
     @Transactional
     public Application applyForJob(Student student, Long jobId) {
         if (Boolean.TRUE.equals(student.getIsBlacklisted())) {
-            throw new IllegalStateException("Your account has been blacklisted by the placement administration.");
+            throw new BlacklistedUserException("You are blacklisted by this company and are not eligible to apply. Please contact the administrator for more information.");
         }
 
         JobDrive jobDrive = jobDriveRepository.findById(jobId)
@@ -115,9 +116,17 @@ public class ApplicationService {
 
     @Transactional
     public void withdrawApplication(Long id, Student student) {
+        deleteApplication(id, student);
+    }
+
+    @Transactional
+    public void deleteApplication(Long id, Student student) {
         Application application = getApplicationById(id);
         if (!application.getStudent().getId().equals(student.getId())) {
-            throw new IllegalArgumentException("You can only withdraw your own applications.");
+            throw new IllegalArgumentException("You can only delete your own applications.");
+        }
+        if (application.getStatus() == ApplicationStatus.SELECTED || application.getStatus() == ApplicationStatus.REJECTED) {
+            throw new IllegalStateException("Cannot delete an application that has already reached a final decision status (" + application.getStatus() + ").");
         }
         applicationRepository.delete(application);
     }

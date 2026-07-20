@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import API from '../api/api';
 import StatusTimeline from '../components/StatusTimeline';
-import { Calendar, Briefcase, ChevronRight, X } from 'lucide-react';
+import toast from 'react-hot-toast';
+import { Calendar, Briefcase, ChevronRight, X, Trash2 } from 'lucide-react';
 
 const ApplicationsList = () => {
   const [applications, setApplications] = useState([]);
@@ -23,6 +24,22 @@ const ApplicationsList = () => {
   useEffect(() => {
     fetchApplications();
   }, []);
+
+  const handleDeleteApplication = async (appId, companyName) => {
+    if (!window.confirm(`Are you sure you want to delete your application for ${companyName}?`)) {
+      return;
+    }
+    try {
+      await API.delete(`/api/applications/${appId}`);
+      toast.success('Application deleted successfully!');
+      setApplications(prev => prev.filter(app => app.id !== appId));
+      if (selectedApp?.id === appId) {
+        setSelectedApp(null);
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to delete application.');
+    }
+  };
 
   if (loading) {
     return (
@@ -57,7 +74,7 @@ const ApplicationsList = () => {
                   <th>Salary package</th>
                   <th>Submission Date</th>
                   <th>Status Stage</th>
-                  <th>Action</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -85,14 +102,35 @@ const ApplicationsList = () => {
                         </span>
                       </td>
                       <td>
-                        <button 
-                          className="btn btn-secondary btn-sm" 
-                          onClick={() => setSelectedApp(app)}
-                          style={{ display: 'flex', alignItems: 'center', gap: 4 }}
-                        >
-                          <span>Track</span>
-                          <ChevronRight size={14} />
-                        </button>
+                        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                          <button 
+                            className="btn btn-secondary btn-sm" 
+                            onClick={() => setSelectedApp(app)}
+                            style={{ display: 'flex', alignItems: 'center', gap: 4 }}
+                          >
+                            <span>Track</span>
+                            <ChevronRight size={14} />
+                          </button>
+                          {app.status === 'SELECTED' || app.status === 'REJECTED' ? (
+                            <button 
+                              className="btn btn-secondary btn-sm" 
+                              disabled
+                              style={{ padding: '6px', opacity: 0.5, cursor: 'not-allowed' }}
+                              title="Final decision reached - deletion disabled"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          ) : (
+                            <button 
+                              className="btn btn-danger btn-sm" 
+                              onClick={() => handleDeleteApplication(app.id, app.companyName)}
+                              style={{ padding: '6px' }}
+                              title="Delete Application"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );
@@ -159,9 +197,20 @@ const ApplicationsList = () => {
               )}
             </div>
 
-            <div className="modal-footer">
+            <div className="modal-footer" style={{ justifyContent: 'space-between' }}>
+              {selectedApp.status !== 'SELECTED' && selectedApp.status !== 'REJECTED' ? (
+                <button 
+                  className="btn btn-danger" 
+                  onClick={() => handleDeleteApplication(selectedApp.id, selectedApp.companyName)}
+                  style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+                >
+                  <Trash2 size={16} />
+                  <span>Delete Application</span>
+                </button>
+              ) : <div></div>}
+
               <button className="btn btn-primary" onClick={() => setSelectedApp(null)}>
-                Done
+                Close
               </button>
             </div>
           </div>
