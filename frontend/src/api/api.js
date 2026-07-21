@@ -8,20 +8,29 @@ const API = axios.create({
   },
 });
 
-// Helper to get active session token
+// Helper to get active session token strictly from sessionStorage
 const getAuthToken = () => {
-  return sessionStorage.getItem('token') || localStorage.getItem('token');
+  // Purge any legacy localStorage token for maximum security
+  if (localStorage.getItem('token')) {
+    localStorage.removeItem('token');
+  }
+  if (localStorage.getItem('user')) {
+    localStorage.removeItem('user');
+  }
+  return sessionStorage.getItem('token');
 };
 
 // Helper to clear all session auth keys
 export const clearAuthSession = () => {
   sessionStorage.removeItem('token');
   sessionStorage.removeItem('user');
+  sessionStorage.removeItem('lastActiveTime');
+  sessionStorage.removeItem('lastBackgroundTime');
   localStorage.removeItem('token');
   localStorage.removeItem('user');
 };
 
-// Request interceptor to add JWT token
+// Request interceptor to add JWT token from sessionStorage
 API.interceptors.request.use(
   (config) => {
     const token = getAuthToken();
