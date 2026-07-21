@@ -5,13 +5,14 @@ import toast from 'react-hot-toast';
 import { 
   User, Award, BookOpen, GraduationCap, FileText, Upload, ExternalLink, 
   Briefcase, Code, FolderGit2, Trophy, Plus, Trash2, Edit3, X, Check, 
-  Globe, Layers, Database, Cpu, Languages 
+  Globe, Layers, Database, Cpu, Languages, RefreshCw, AlertTriangle
 } from 'lucide-react';
 
 const StudentProfile = () => {
   const { updateLocalUser } = useAuth();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('academic'); // academic, experience, skills, projects, accomplishments
 
   const [isEditingBasic, setIsEditingBasic] = useState(false);
@@ -94,34 +95,84 @@ const StudentProfile = () => {
   const fetchProfile = async () => {
     try {
       setLoading(true);
+      setError(null);
       const res = await API.get('/api/students/me');
       const data = res.data;
+      if (!data) {
+        throw new Error('No profile data returned from server.');
+      }
       setProfile(data);
       setFormData({
         name: data.name || '',
         email: data.email || '',
         branch: data.branch || '',
-        cgpa: data.cgpa || '',
-        backlogs: data.backlogs !== undefined ? data.backlogs : '0',
-        graduationYear: data.graduationYear || '2026',
-        skills: data.skills ? data.skills.join(', ') : ''
+        cgpa: data.cgpa !== undefined && data.cgpa !== null ? String(data.cgpa) : '',
+        backlogs: data.backlogs !== undefined && data.backlogs !== null ? String(data.backlogs) : '0',
+        graduationYear: data.graduationYear ? String(data.graduationYear) : '2026',
+        skills: Array.isArray(data.skills) ? data.skills.join(', ') : ''
       });
 
-      // Parse Module JSONs
+      // Parse Module JSONs safely
       if (data.experiencesJson) {
-        try { setExperiences(JSON.parse(data.experiencesJson)); } catch (e) {}
+        try {
+          const parsed = JSON.parse(data.experiencesJson);
+          setExperiences(Array.isArray(parsed) ? parsed : []);
+        } catch (e) {
+          setExperiences([]);
+        }
+      } else {
+        setExperiences([]);
       }
+
       if (data.projectsJson) {
-        try { setProjects(JSON.parse(data.projectsJson)); } catch (e) {}
+        try {
+          const parsed = JSON.parse(data.projectsJson);
+          setProjects(Array.isArray(parsed) ? parsed : []);
+        } catch (e) {
+          setProjects([]);
+        }
+      } else {
+        setProjects([]);
       }
+
       if (data.skillCategoriesJson) {
-        try { setSkillCategories(JSON.parse(data.skillCategoriesJson)); } catch (e) {}
+        try {
+          const parsed = JSON.parse(data.skillCategoriesJson);
+          setSkillCategories(parsed && typeof parsed === 'object' ? parsed : {
+            technicalSkills: [],
+            programmingLanguages: [],
+            frameworks: [],
+            databases: [],
+            coreSubjects: [],
+            spokenLanguages: []
+          });
+        } catch (e) {
+          setSkillCategories({
+            technicalSkills: [],
+            programmingLanguages: [],
+            frameworks: [],
+            databases: [],
+            coreSubjects: [],
+            spokenLanguages: []
+          });
+        }
       }
+
       if (data.accomplishmentsJson) {
-        try { setAccomplishments(JSON.parse(data.accomplishmentsJson)); } catch (e) {}
+        try {
+          const parsed = JSON.parse(data.accomplishmentsJson);
+          setAccomplishments(Array.isArray(parsed) ? parsed : []);
+        } catch (e) {
+          setAccomplishments([]);
+        }
+      } else {
+        setAccomplishments([]);
       }
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Error loading profile details.');
+      console.error('Error fetching profile:', err);
+      const errMsg = err.response?.data?.message || err.message || 'Error loading profile details.';
+      setError(errMsg);
+      toast.error(errMsg);
     } finally {
       setLoading(false);
     }
@@ -131,15 +182,15 @@ const StudentProfile = () => {
     fetchProfile();
   }, []);
 
-  const saveFullProfile = async (updatedData) => {
+  const saveFullProfile = async (updatedData = {}) => {
     try {
       const payload = {
         name: updatedData.name ?? formData.name,
         email: updatedData.email ?? formData.email,
         branch: updatedData.branch ?? formData.branch,
-        cgpa: parseFloat(updatedData.cgpa ?? formData.cgpa),
-        backlogs: parseInt(updatedData.backlogs ?? formData.backlogs),
-        graduationYear: parseInt(updatedData.graduationYear ?? formData.graduationYear),
+        cgpa: parseFloat(updatedData.cgpa ?? formData.cgpa) || 0,
+        backlogs: parseInt(updatedData.backlogs ?? formData.backlogs) || 0,
+        graduationYear: parseInt(updatedData.graduationYear ?? formData.graduationYear) || 2026,
         skills: updatedData.skills !== undefined ? updatedData.skills : (formData.skills ? formData.skills.split(',').map(s => s.trim()).filter(Boolean) : []),
         experiencesJson: JSON.stringify(updatedData.experiences ?? experiences),
         projectsJson: JSON.stringify(updatedData.projects ?? projects),
@@ -149,17 +200,20 @@ const StudentProfile = () => {
 
       const res = await API.put('/api/students/me', payload);
       setProfile(res.data);
-      updateLocalUser(res.data);
+      if (updateLocalUser) {
+        updateLocalUser(res.data);
+      }
       toast.success('Profile saved successfully!');
       return res.data;
     } catch (err) {
+      console.error('Error saving profile:', err);
       toast.error(err.response?.data?.message || 'Failed to update profile.');
       throw err;
     }
   };
 
   const handleResumeUpload = async (e) => {
-    const file = e.target.files[0];
+    const file = e.target.files?.[0];
     if (!file) return;
     if (!file.name.toLowerCase().endsWith('.pdf')) {
       toast.error('Please select a PDF document file.');
@@ -175,6 +229,7 @@ const StudentProfile = () => {
       setProfile(res.data);
       toast.success('PDF Resume uploaded successfully!');
     } catch (err) {
+      console.error('Resume upload error:', err);
       toast.error(err.response?.data?.message || 'Error uploading resume.');
     } finally {
       setUploadingResume(false);
@@ -183,7 +238,7 @@ const StudentProfile = () => {
 
   // --- Experience Handlers ---
   const handleOpenExpModal = (index = null) => {
-    if (index !== null) {
+    if (index !== null && experiences[index]) {
       setEditingItemIndex(index);
       setExpForm({ ...experiences[index] });
     } else {
@@ -204,7 +259,7 @@ const StudentProfile = () => {
 
   const handleSaveExp = async (e) => {
     e.preventDefault();
-    let newExpList = [...experiences];
+    let newExpList = Array.isArray(experiences) ? [...experiences] : [];
     if (editingItemIndex !== null) {
       newExpList[editingItemIndex] = expForm;
     } else {
@@ -217,14 +272,14 @@ const StudentProfile = () => {
 
   const handleDeleteExp = async (index) => {
     if (!window.confirm('Delete this work experience entry?')) return;
-    const newExpList = experiences.filter((_, i) => i !== index);
+    const newExpList = (experiences || []).filter((_, i) => i !== index);
     setExperiences(newExpList);
     await saveFullProfile({ experiences: newExpList });
   };
 
   // --- Project Handlers ---
   const handleOpenProjectModal = (index = null) => {
-    if (index !== null) {
+    if (index !== null && projects[index]) {
       setEditingItemIndex(index);
       setProjectForm({ ...projects[index] });
     } else {
@@ -246,7 +301,7 @@ const StudentProfile = () => {
 
   const handleSaveProject = async (e) => {
     e.preventDefault();
-    let newProjList = [...projects];
+    let newProjList = Array.isArray(projects) ? [...projects] : [];
     if (editingItemIndex !== null) {
       newProjList[editingItemIndex] = projectForm;
     } else {
@@ -259,14 +314,14 @@ const StudentProfile = () => {
 
   const handleDeleteProject = async (index) => {
     if (!window.confirm('Delete this project entry?')) return;
-    const newProjList = projects.filter((_, i) => i !== index);
+    const newProjList = (projects || []).filter((_, i) => i !== index);
     setProjects(newProjList);
     await saveFullProfile({ projects: newProjList });
   };
 
   // --- Accomplishment Handlers ---
   const handleOpenAccomplishmentModal = (index = null) => {
-    if (index !== null) {
+    if (index !== null && accomplishments[index]) {
       setEditingItemIndex(index);
       setAccomplishmentForm({ ...accomplishments[index] });
     } else {
@@ -286,7 +341,7 @@ const StudentProfile = () => {
 
   const handleSaveAccomplishment = async (e) => {
     e.preventDefault();
-    let newAccList = [...accomplishments];
+    let newAccList = Array.isArray(accomplishments) ? [...accomplishments] : [];
     if (editingItemIndex !== null) {
       newAccList[editingItemIndex] = accomplishmentForm;
     } else {
@@ -299,23 +354,21 @@ const StudentProfile = () => {
 
   const handleDeleteAccomplishment = async (index) => {
     if (!window.confirm('Delete this accomplishment record?')) return;
-    const newAccList = accomplishments.filter((_, i) => i !== index);
+    const newAccList = (accomplishments || []).filter((_, i) => i !== index);
     setAccomplishments(newAccList);
     await saveFullProfile({ accomplishments: newAccList });
   };
 
-  // --- Skills Category Tag Handlers ---
+  // --- Skills Tag Handlers ---
   const handleAddSkillTag = async (category) => {
     const val = newTagInput[category]?.trim();
     if (!val) return;
-    const currentList = skillCategories[category] || [];
-    if (currentList.includes(val)) {
-      toast.error('Skill tag already added.');
-      return;
-    }
+    const currentTags = Array.isArray(skillCategories[category]) ? skillCategories[category] : [];
+    if (currentTags.includes(val)) return;
+
     const updatedCats = {
       ...skillCategories,
-      [category]: [...currentList, val]
+      [category]: [...currentTags, val]
     };
     setSkillCategories(updatedCats);
     setNewTagInput(prev => ({ ...prev, [category]: '' }));
@@ -323,9 +376,10 @@ const StudentProfile = () => {
   };
 
   const handleRemoveSkillTag = async (category, tag) => {
+    const currentTags = Array.isArray(skillCategories[category]) ? skillCategories[category] : [];
     const updatedCats = {
       ...skillCategories,
-      [category]: (skillCategories[category] || []).filter(t => t !== tag)
+      [category]: currentTags.filter(t => t !== tag)
     };
     setSkillCategories(updatedCats);
     await saveFullProfile({ skillCategories: updatedCats });
@@ -335,7 +389,7 @@ const StudentProfile = () => {
     const lang = newTagInput.spokenLanguage?.trim();
     const prof = newTagInput.spokenProficiency;
     if (!lang) return;
-    const currentList = skillCategories.spokenLanguages || [];
+    const currentList = Array.isArray(skillCategories.spokenLanguages) ? skillCategories.spokenLanguages : [];
     const updatedCats = {
       ...skillCategories,
       spokenLanguages: [...currentList.filter(l => l.language.toLowerCase() !== lang.toLowerCase()), { language: lang, proficiency: prof }]
@@ -346,19 +400,49 @@ const StudentProfile = () => {
   };
 
   const handleRemoveSpokenLanguage = async (langName) => {
+    const currentList = Array.isArray(skillCategories.spokenLanguages) ? skillCategories.spokenLanguages : [];
     const updatedCats = {
       ...skillCategories,
-      spokenLanguages: (skillCategories.spokenLanguages || []).filter(l => l.language !== langName)
+      spokenLanguages: currentList.filter(l => l.language !== langName)
     };
     setSkillCategories(updatedCats);
     await saveFullProfile({ skillCategories: updatedCats });
   };
+
+  // Safe Arrays
+  const safeExperiences = Array.isArray(experiences) ? experiences : [];
+  const safeProjects = Array.isArray(projects) ? projects : [];
+  const safeAccomplishments = Array.isArray(accomplishments) ? accomplishments : [];
+  const safeSpokenLanguages = Array.isArray(skillCategories?.spokenLanguages) ? skillCategories.spokenLanguages : [];
 
   if (loading) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
         <div className="skeleton" style={{ height: 40, width: 250 }}></div>
         <div className="skeleton" style={{ height: 400 }}></div>
+      </div>
+    );
+  }
+
+  if (error || !profile) {
+    return (
+      <div>
+        <div className="workspace-header">
+          <div className="header-title-group">
+            <h1>Placement Student Profile</h1>
+            <span className="header-subtitle">Comprehensive career dossier for campus recruitment portals.</span>
+          </div>
+        </div>
+        <div className="content-card" style={{ padding: '40px 20px', textAlign: 'center' }}>
+          <AlertTriangle size={36} className="text-danger" style={{ marginBottom: 12 }} />
+          <h3 style={{ fontSize: '1.1rem', color: 'var(--text-main)', marginBottom: 6 }}>Unable to Load Profile</h3>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: 20 }}>
+            {error || 'Failed to connect to the backend server. Please verify your internet connection or login status.'}
+          </p>
+          <button className="btn btn-primary" onClick={fetchProfile}>
+            <RefreshCw size={16} /> Retry Loading Profile
+          </button>
+        </div>
       </div>
     );
   }
@@ -385,10 +469,10 @@ const StudentProfile = () => {
             </span>
           </div>
 
-          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
             {profile?.resumeUrl && (
               <a 
-                href={`https://campus-placement-management-system-v6j0.onrender.com${profile.resumeUrl}`} 
+                href={profile.resumeUrl.startsWith('http') ? profile.resumeUrl : `https://campus-placement-management-system-v6j0.onrender.com${profile.resumeUrl}`} 
                 target="_blank" 
                 rel="noreferrer" 
                 className="btn btn-secondary btn-sm"
@@ -408,13 +492,13 @@ const StudentProfile = () => {
       </div>
 
       {/* Module Navigation Tabs */}
-      <div style={{ display: 'flex', gap: 8, borderBottom: '1px solid var(--border)', marginBottom: 24, overflowX: 'auto', paddingBottom: 4 }}>
+      <div className="profile-tabs" style={{ display: 'flex', gap: 8, borderBottom: '1px solid var(--border)', marginBottom: 24, overflowX: 'auto', paddingBottom: 6 }}>
         {[
           { id: 'academic', label: 'Academic Details', icon: BookOpen },
-          { id: 'experience', label: `Work Experience (${experiences.length})`, icon: Briefcase },
+          { id: 'experience', label: `Work Experience (${safeExperiences.length})`, icon: Briefcase },
           { id: 'skills', label: 'Skills & Languages', icon: Code },
-          { id: 'projects', label: `Projects (${projects.length})`, icon: FolderGit2 },
-          { id: 'accomplishments', label: `Accomplishments (${accomplishments.length})`, icon: Trophy }
+          { id: 'projects', label: `Projects (${safeProjects.length})`, icon: FolderGit2 },
+          { id: 'accomplishments', label: `Accomplishments (${safeAccomplishments.length})`, icon: Trophy }
         ].map(tab => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -422,14 +506,15 @@ const StudentProfile = () => {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`btn ${isActive ? 'btn-primary' : 'btn-secondary'}`}
+              className={`btn ${isActive ? 'btn-primary' : 'btn-secondary'} profile-tab-btn`}
               style={{
                 borderRadius: '8px 8px 0 0',
                 fontSize: '0.85rem',
                 padding: '8px 16px',
                 display: 'flex',
                 alignItems: 'center',
-                gap: 6
+                gap: 6,
+                flexShrink: 0
               }}
             >
               <Icon size={16} />
@@ -442,7 +527,7 @@ const StudentProfile = () => {
       {/* Tab 1: Academic & Basic Details */}
       {activeTab === 'academic' && (
         <div className="content-card">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 10 }}>
             <h2 className="card-title" style={{ margin: 0 }}>Academic Credentials</h2>
             {!isEditingBasic ? (
               <button className="btn btn-secondary btn-sm" onClick={() => setIsEditingBasic(true)}>
@@ -517,30 +602,30 @@ const StudentProfile = () => {
             <div className="profile-grid">
               <div className="profile-field">
                 <span className="profile-label">Student Name</span>
-                <span className="profile-value">{profile.name}</span>
+                <span className="profile-value">{profile?.name || 'N/A'}</span>
               </div>
               <div className="profile-field">
                 <span className="profile-label">Email Address</span>
-                <span className="profile-value">{profile.email}</span>
+                <span className="profile-value">{profile?.email || 'N/A'}</span>
               </div>
               <div className="profile-field" style={{ marginTop: 12 }}>
                 <span className="profile-label">Roll Number</span>
-                <span className="profile-value">{profile.rollNumber}</span>
+                <span className="profile-value">{profile?.rollNumber || 'N/A'}</span>
               </div>
               <div className="profile-field" style={{ marginTop: 12 }}>
                 <span className="profile-label">Academic Branch</span>
-                <span className="profile-value">{profile.branch}</span>
+                <span className="profile-value">{profile?.branch || 'N/A'}</span>
               </div>
               <div className="profile-field" style={{ marginTop: 12 }}>
                 <span className="profile-label">Cumulative CGPA</span>
                 <span className="profile-value" style={{ color: 'var(--primary)', fontWeight: 700 }}>
-                  {profile.cgpa ? Number(profile.cgpa).toFixed(2) : 'N/A'}
+                  {profile?.cgpa ? Number(profile.cgpa).toFixed(2) : 'N/A'}
                 </span>
               </div>
               <div className="profile-field" style={{ marginTop: 12 }}>
                 <span className="profile-label">Active Backlogs</span>
-                <span className="profile-value" style={{ color: profile.backlogs > 0 ? 'var(--danger)' : 'var(--success)', fontWeight: 600 }}>
-                  {profile.backlogs}
+                <span className="profile-value" style={{ color: (profile?.backlogs || 0) > 0 ? 'var(--danger)' : 'var(--success)', fontWeight: 600 }}>
+                  {profile?.backlogs !== undefined && profile?.backlogs !== null ? profile.backlogs : 0}
                 </span>
               </div>
             </div>
@@ -551,20 +636,20 @@ const StudentProfile = () => {
       {/* Tab 2: Internships & Work Experience */}
       {activeTab === 'experience' && (
         <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-            <h3>Internships & Professional Work Experience</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 10 }}>
+            <h3 style={{ margin: 0 }}>Internships & Professional Work Experience</h3>
             <button className="btn btn-primary btn-sm" onClick={() => handleOpenExpModal()}>
               <Plus size={16} /> Add Experience
             </button>
           </div>
 
-          {experiences.length === 0 ? (
+          {safeExperiences.length === 0 ? (
             <div className="content-card" style={{ padding: '50px 0', textAlign: 'center', color: 'var(--text-muted)' }}>
               No internships or work experience added yet. Click Add Experience above.
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              {experiences.map((exp, idx) => (
+              {safeExperiences.map((exp, idx) => (
                 <div key={idx} className="content-card" style={{ margin: 0 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <div>
@@ -620,7 +705,7 @@ const StudentProfile = () => {
             { key: 'coreSubjects', title: 'Core Computer Science Subjects', placeholder: 'e.g. DBMS, Operating Systems, Computer Networks', icon: BookOpen }
           ].map(cat => {
             const CatIcon = cat.icon;
-            const tags = skillCategories[cat.key] || [];
+            const tags = Array.isArray(skillCategories?.[cat.key]) ? skillCategories[cat.key] : [];
             return (
               <div key={cat.key} className="content-card" style={{ margin: 0 }}>
                 <h4 style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '1rem', marginBottom: 12 }}>
@@ -628,7 +713,7 @@ const StudentProfile = () => {
                   <span>{cat.title}</span>
                 </h4>
 
-                <div style={{ display: 'flex', gap: 10, marginBottom: 12 }}>
+                <div style={{ display: 'flex', gap: 10, marginBottom: 12, flexWrap: 'wrap' }}>
                   <input
                     type="text"
                     className="form-control"
@@ -636,7 +721,7 @@ const StudentProfile = () => {
                     value={newTagInput[cat.key] || ''}
                     onChange={e => setNewTagInput({ ...newTagInput, [cat.key]: e.target.value })}
                     onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAddSkillTag(cat.key); } }}
-                    style={{ maxWidth: 400 }}
+                    style={{ flex: 1, minWidth: 200 }}
                   />
                   <button className="btn btn-primary btn-sm" onClick={() => handleAddSkillTag(cat.key)}>
                     <Plus size={14} /> Add Tag
@@ -670,13 +755,13 @@ const StudentProfile = () => {
                 placeholder="e.g. English, Hindi, German"
                 value={newTagInput.spokenLanguage || ''}
                 onChange={e => setNewTagInput({ ...newTagInput, spokenLanguage: e.target.value })}
-                style={{ maxWidth: 220 }}
+                style={{ flex: 1, minWidth: 180 }}
               />
               <select
                 className="form-control"
                 value={newTagInput.spokenProficiency || 'Professional'}
                 onChange={e => setNewTagInput({ ...newTagInput, spokenProficiency: e.target.value })}
-                style={{ maxWidth: 200 }}
+                style={{ flex: 1, minWidth: 180 }}
               >
                 <option value="Native / Full Professional">Native / Full Professional</option>
                 <option value="Professional Working">Professional Working</option>
@@ -688,14 +773,14 @@ const StudentProfile = () => {
             </div>
 
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-              {(skillCategories.spokenLanguages || []).map((item, i) => (
-                <div key={i} style={{ background: 'var(--bg-body)', padding: '6px 12px', borderRadius: 8, border: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 8 }}>
+              {safeSpokenLanguages.map((item, i) => (
+                <div key={i} style={{ background: 'var(--bg-app)', padding: '6px 12px', borderRadius: 8, border: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 8 }}>
                   <span style={{ fontWeight: 600, fontSize: '0.85rem' }}>{item.language}</span>
                   <span className="badge badge-secondary" style={{ fontSize: '0.65rem' }}>{item.proficiency}</span>
                   <X size={14} style={{ cursor: 'pointer', color: 'var(--danger)' }} onClick={() => handleRemoveSpokenLanguage(item.language)} />
                 </div>
               ))}
-              {(skillCategories.spokenLanguages || []).length === 0 && (
+              {safeSpokenLanguages.length === 0 && (
                 <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>No spoken languages added.</span>
               )}
             </div>
@@ -706,20 +791,20 @@ const StudentProfile = () => {
       {/* Tab 4: Projects Portfolio */}
       {activeTab === 'projects' && (
         <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-            <h3>Projects Portfolio</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 10 }}>
+            <h3 style={{ margin: 0 }}>Projects Portfolio</h3>
             <button className="btn btn-primary btn-sm" onClick={() => handleOpenProjectModal()}>
               <Plus size={16} /> Add Project
             </button>
           </div>
 
-          {projects.length === 0 ? (
+          {safeProjects.length === 0 ? (
             <div className="content-card" style={{ padding: '50px 0', textAlign: 'center', color: 'var(--text-muted)' }}>
               No software/hardware projects listed. Showcase your top projects to employers!
             </div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 16 }}>
-              {projects.map((proj, idx) => (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
+              {safeProjects.map((proj, idx) => (
                 <div key={idx} className="content-card" style={{ margin: 0, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                   <div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -773,20 +858,20 @@ const StudentProfile = () => {
       {/* Tab 5: Accomplishments & Certifications */}
       {activeTab === 'accomplishments' && (
         <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-            <h3>Certifications, Awards & Hackathon Accomplishments</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 10 }}>
+            <h3 style={{ margin: 0 }}>Certifications, Awards & Hackathon Accomplishments</h3>
             <button className="btn btn-primary btn-sm" onClick={() => handleOpenAccomplishmentModal()}>
               <Plus size={16} /> Add Accomplishment
             </button>
           </div>
 
-          {accomplishments.length === 0 ? (
+          {safeAccomplishments.length === 0 ? (
             <div className="content-card" style={{ padding: '50px 0', textAlign: 'center', color: 'var(--text-muted)' }}>
               No certifications, hackathon wins, or contest ranks listed.
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              {accomplishments.map((acc, idx) => (
+              {safeAccomplishments.map((acc, idx) => (
                 <div key={idx} className="content-card" style={{ margin: 0 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <div>
@@ -857,7 +942,7 @@ const StudentProfile = () => {
                     <option value="Freelance">Freelance</option>
                   </select>
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div className="form-grid">
                   <div className="form-group">
                     <label>Start Date</label>
                     <input type="date" className="form-control" value={expForm.startDate} onChange={e => setExpForm({ ...expForm, startDate: e.target.value })} />
@@ -906,7 +991,7 @@ const StudentProfile = () => {
                   <label>Technologies Used (comma-separated)</label>
                   <input type="text" className="form-control" value={projectForm.technologiesUsed} onChange={e => setProjectForm({ ...projectForm, technologiesUsed: e.target.value })} placeholder="e.g. React, Spring Boot, MySQL" required />
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div className="form-grid">
                   <div className="form-group">
                     <label>Team Size</label>
                     <input type="number" min="1" className="form-control" value={projectForm.teamSize} onChange={e => setProjectForm({ ...projectForm, teamSize: e.target.value })} />
@@ -965,7 +1050,7 @@ const StudentProfile = () => {
                   <label>Issuing Organization / Platform</label>
                   <input type="text" className="form-control" value={accomplishmentForm.issuer} onChange={e => setAccomplishmentForm({ ...accomplishmentForm, issuer: e.target.value })} placeholder="e.g. AWS, Coursera, LeetCode" />
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div className="form-grid">
                   <div className="form-group">
                     <label>Rank / Score (if applicable)</label>
                     <input type="text" className="form-control" value={accomplishmentForm.rank} onChange={e => setAccomplishmentForm({ ...accomplishmentForm, rank: e.target.value })} placeholder="e.g. Top 1%, Rank 15" />
