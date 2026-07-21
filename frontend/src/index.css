@@ -889,34 +889,212 @@ button, input, select, textarea {
   gap: 20px;
 }
 
+/* ==========================================================================
+   GLOBAL RESPONSIVE DESIGN SYSTEM (MOBILE, TABLET, DESKTOP)
+   ========================================================================== */
+
+/* Universal Overflow & Layout Safety */
+html, body, #root {
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+.app-container {
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+/* Responsive Images, SVGs, Charts & Modals */
+img, svg, canvas {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Responsive Table Wrapper */
+.table-container {
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background-color: var(--bg-card);
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+.app-table {
+  width: 100%;
+  min-width: 600px;
+  border-collapse: collapse;
+}
+
+/* ==========================================================================
+   TABLET & MOBILE BREAKPOINTS (max-width: 992px & max-width: 767px)
+   ========================================================================== */
+
 @media (max-width: 992px) {
-  .sidebar {
-    transform: translateX(-100%);
+  /* Workspace Header & Title Group */
+  .workspace-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+    margin-bottom: 16px !important;
+    padding-bottom: 12px !important;
   }
-  .sidebar.show {
-    transform: translateX(0);
+
+  .header-title-group h1 {
+    font-size: 1.25rem !important;
   }
-  .workspace {
-    margin-left: 0;
-    padding: 20px;
+
+  .header-subtitle {
+    font-size: 0.8rem !important;
   }
-  .auth-container {
-    flex-direction: column;
+
+  /* Grid Layouts - 2 Columns on Tablets */
+  .dashboard-grid,
+  .grid-4,
+  .stats-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 14px !important;
   }
-  .auth-sidebar {
-    width: 100%;
-    padding: 24px;
-    height: auto;
-    min-height: auto;
-  }
-  .auth-workspace {
-    width: 100%;
-    padding: 24px;
-  }
+
   .content-grid {
-    grid-template-columns: 1fr;
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
   }
-  .form-grid {
-    grid-template-columns: 1fr;
+
+  .form-grid,
+  .grid-2,
+  .grid-3 {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  /* Auth Container (Login / Register) */
+  .auth-container {
+    flex-direction: column !important;
+    min-height: 100vh;
+  }
+
+  .auth-sidebar {
+    width: 100% !important;
+    height: auto !important;
+    min-height: auto !important;
+    padding: 24px 16px !important;
+  }
+
+  .auth-workspace {
+    width: 100% !important;
+    padding: 24px 16px !important;
+  }
+
+  .auth-box {
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+}
+
+/* Mobile Devices Only (max-width: 767px) */
+@media (max-width: 767px) {
+  /* Workspace Inner Padding */
+  .workspace {
+    padding: 14px 10px !important;
+  }
+
+  /* Dashboard Cards Stack Vertically (1 Column) */
+  .dashboard-grid,
+  .grid-4,
+  .grid-3,
+  .grid-2,
+  .stats-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .stats-card,
+  .content-card {
+    width: 100% !important;
+    min-width: 0 !important;
+    margin-bottom: 14px !important;
+    box-sizing: border-box !important;
+    padding: 14px !important;
+  }
+
+  /* Hiring Drives Page - Search & Filters Stack */
+  .search-filter-bar,
+  .drives-filter-wrapper,
+  .filter-bar {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+    width: 100% !important;
+  }
+
+  .header-search-bar,
+  .search-input-wrapper,
+  .search-input,
+  .select-filter,
+  .filter-select {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .drives-grid {
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+
+  /* Student Profile Tab Bar Horizontal Scrolling */
+  .profile-tabs {
+    display: flex !important;
+    overflow-x: auto !important;
+    white-space: nowrap !important;
+    -webkit-overflow-scrolling: touch !important;
+    padding-bottom: 8px !important;
+    gap: 6px !important;
+    width: 100% !important;
+    border-bottom: 1px solid var(--border) !important;
+  }
+
+  .profile-tab-btn {
+    flex-shrink: 0 !important;
+    padding: 8px 12px !important;
+    font-size: 0.8rem !important;
+  }
+
+  /* Form Elements Full Width */
+  input, select, textarea, .form-control {
+    width: 100% !important;
+    max-width: 100% !important;
+    font-size: 0.875rem !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Modal Overlays Responsive */
+  .modal-content {
+    width: 92% !important;
+    max-width: 500px !important;
+    padding: 16px !important;
+    margin: 10px auto !important;
+    max-height: 85vh !important;
+    overflow-y: auto !important;
+    border-radius: 12px !important;
+  }
+
+  /* Buttons Full Width on Small Cards if Flex */
+  .card-action-group {
+    flex-direction: column !important;
+    gap: 8px !important;
+    width: 100% !important;
+  }
+
+  .card-action-group .btn {
+    width: 100% !important;
   }
 }

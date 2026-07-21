@@ -144,25 +144,80 @@ const DashboardLayout = () => {
 
   return (
     <div className="app-container">
-      {/* Mobile Top Header */}
+      {/* Mobile Top Header Bar (Fixed at top on screens < 992px) */}
       <header className="mobile-header-bar">
-        <div onClick={handleLogoClick} style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }} title="Go to Dashboard">
+        <div onClick={handleLogoClick} style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }} title="Go to Dashboard">
           <div className="sidebar-logo" style={{ width: 28, height: 28, fontSize: '0.9rem', borderRadius: 5 }}>P</div>
           <span style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-main)', letterSpacing: '-0.02em' }}>PLACEHUB</span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          {/* Theme switcher */}
+          <button onClick={toggleTheme} className="theme-toggle-btn" style={{ padding: 6 }}>
+            {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
+          </button>
+
+          {/* Search Trigger */}
+          <button onClick={() => setSearchOpen(true)} className="theme-toggle-btn" style={{ padding: 6 }} title="Search Workspace">
+            <Search size={18} />
+          </button>
+
+          {/* Notifications */}
+          <div className="notif-wrapper">
+            <button onClick={() => setNotifOpen(!notifOpen)} className="notif-btn" style={{ padding: 6 }}>
+              <Bell size={18} />
+              {unreadCount > 0 && <span className="notif-badge" />}
+            </button>
+
+            <AnimatePresence>
+              {notifOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                  transition={{ duration: 0.15 }}
+                  className="notification-dropdown"
+                  style={{ right: -40, width: 280 }}
+                >
+                  <div className="notif-header">
+                    <span className="notif-title">Notifications</span>
+                    {unreadCount > 0 && (
+                      <button onClick={markAllRead} className="notif-mark-btn">Mark all read</button>
+                    )}
+                  </div>
+                  <div className="notif-list">
+                    {notifications.map(notif => (
+                      <div key={notif.id} className={`notif-item ${notif.read ? "" : "unread"}`}>
+                        <span className="notif-text">{notif.text}</span>
+                        <span className="notif-time">{notif.time}</span>
+                      </div>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* Hamburger Menu Toggle */}
           <button 
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            style={{ background: 'none', border: 'none', color: 'var(--text-main)', cursor: 'pointer', display: 'flex' }}
+            style={{ background: 'none', border: 'none', color: 'var(--text-main)', cursor: 'pointer', display: 'flex', padding: 6 }}
+            aria-label="Toggle Menu"
           >
-            {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+            {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
           </button>
         </div>
       </header>
 
-      {/* Main Sidebar (Desktop / Collapsible) */}
+      {/* Sidebar Backdrop Overlay (Mobile & Tablet) */}
+      <div 
+        className={`sidebar-backdrop ${mobileMenuOpen ? "show" : ""}`} 
+        onClick={() => setMobileMenuOpen(false)} 
+      />
+
+      {/* Main Sidebar (Desktop / Collapsible Mobile Drawer) */}
       <aside className={`sidebar ${sidebarCollapsed ? "collapsed" : ""} ${mobileMenuOpen ? "show" : ""}`}>
-        <div className="sidebar-brand" onClick={handleLogoClick} style={{ cursor: 'pointer' }} title="Go to Dashboard">
+        <div className="sidebar-brand" onClick={() => { handleLogoClick(); setMobileMenuOpen(false); }} style={{ cursor: 'pointer' }} title="Go to Dashboard">
           <div className="sidebar-logo">P</div>
           <span className="brand-text">PLACEHUB</span>
         </div>
@@ -233,7 +288,7 @@ const DashboardLayout = () => {
               <span className="user-role">{user?.role}</span>
             </div>
           </div>
-          <button className="btn-logout" onClick={handleLogout}>
+          <button className="btn-logout" onClick={() => { setMobileMenuOpen(false); handleLogout(); }}>
             <LogOut size={16} />
             <span className="menu-text">Logout</span>
           </button>
@@ -499,32 +554,6 @@ const DashboardLayout = () => {
           </div>
         )}
       </AnimatePresence>
-
-      {/* Styled styles for mobile views */}
-      <style>{`
-        @media (max-width: 992px) {
-          .mobile-header-bar {
-            display: flex !important;
-          }
-          .sticky-header {
-            display: none !important;
-          }
-          .sidebar {
-            transform: translateX(-100%);
-            width: 280px !important;
-          }
-          .sidebar.show {
-            transform: translateX(0);
-          }
-          .main-wrapper-container {
-            margin-left: 0 !important;
-            padding-top: 60px !important;
-          }
-          .workspace {
-            padding: 20px 16px !important;
-          }
-        }
-      `}</style>
     </div>
   );
 };
