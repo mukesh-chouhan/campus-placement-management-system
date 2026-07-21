@@ -98,7 +98,7 @@
   top: 0;
   right: 0;
   height: 60px;
-  background-color: #ffffff;
+  background-color: var(--bg-card);
   border-bottom: 1px solid var(--border);
   z-index: 90;
   padding: 0 40px;
@@ -163,7 +163,7 @@
   right: 0;
   margin-top: 8px;
   width: 320px;
-  background-color: #ffffff;
+  background-color: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: 8px;
   box-shadow: var(--shadow-lg);
@@ -177,7 +177,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background-color: #f8fafc;
+  background-color: var(--bg-app);
 }
 
 .notif-title {
@@ -427,7 +427,7 @@
   right: 0;
   margin-top: 8px;
   width: 230px;
-  background-color: var(--bg-card, #ffffff);
+  background-color: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: 10px;
   box-shadow: var(--shadow-lg);
@@ -441,7 +441,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  background-color: var(--bg-app, #f8fafc);
+  background-color: var(--bg-app);
 }
 
 .profile-dropdown-menu {
@@ -469,13 +469,13 @@
 }
 
 .profile-dropdown-item:hover {
-  background-color: var(--primary-light, #eff6ff);
+  background-color: var(--primary-light);
   color: var(--primary);
 }
 
 .profile-dropdown-item.text-danger:hover {
-  background-color: #fee2e2;
-  color: var(--danger, #ef4444);
+  background-color: var(--danger-light);
+  color: var(--danger);
 }
 
 /* Mobile Header Bar & Backdrop Overlay */

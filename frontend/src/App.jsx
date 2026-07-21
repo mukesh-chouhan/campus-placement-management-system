@@ -130,6 +130,17 @@ function App() {
           {/* Fallback Catch-All Route */}
           <Route path="*" element={<ErrorPage />} />
         </Routes>
+        <Toaster 
+          position="top-right" 
+          toastOptions={{
+            className: 'toast-custom',
+            style: {
+              background: 'var(--bg-card)',
+              color: 'var(--text-main)',
+              border: '1px solid var(--border)'
+            }
+          }} 
+        />
       </BrowserRouter>
     </AuthProvider>
   );

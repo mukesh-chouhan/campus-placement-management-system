@@ -341,7 +341,7 @@ const StudentDashboard = () => {
                   cx={60} 
                   cy={60} 
                   r={50} 
-                  stroke="#e2e8f0" 
+                  stroke="var(--border)" 
                   strokeWidth={8} 
                   fill="transparent" 
                 />
@@ -390,7 +390,7 @@ const StudentDashboard = () => {
                     key={app.id} 
                     style={{ 
                       padding: '12px 14px', 
-                      background: '#f8fafc',
+                      background: 'var(--bg-app)',
                       borderRadius: 10,
                       border: '1px solid var(--border)',
                       display: 'flex',
