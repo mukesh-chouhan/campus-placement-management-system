@@ -263,7 +263,7 @@ const JobDrives = () => {
                     </div>
                   </div>
 
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc', padding: 12, borderRadius: 8 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-app)', border: '1px solid var(--border)', padding: 12, borderRadius: 8 }}>
                     <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)' }}>PACKAGE</span>
                     <span style={{ fontWeight: 700, color: 'var(--primary)' }}>{packageLPA}</span>
                   </div>
@@ -341,7 +341,7 @@ const JobDrives = () => {
                 </div>
 
                 {/* AI ATS Evaluator Panel */}
-                <div style={{ background: '#f8fafc', padding: 16, borderRadius: 10, border: '1px solid var(--border)', marginBottom: 20 }}>
+                <div style={{ background: 'var(--bg-app)', padding: 16, borderRadius: 10, border: '1px solid var(--border)', marginBottom: 20 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
                     <h4 style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.95rem', margin: 0 }}>
                       <Sparkles size={16} className="text-primary" />
