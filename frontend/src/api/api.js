@@ -21,12 +21,15 @@ API.interceptors.request.use(
   }
 );
 
-// Response interceptor to handle errors globally
+// Response interceptor to handle authentication errors globally
 API.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response) {
-      if (error.response.status === 401) {
+      const status = error.response.status;
+      // 401 Unauthorized or 403 Forbidden indicates expired token or unauthorized access
+      if (status === 401 || status === 403) {
+        console.warn(`[API Interceptor] Session unauthorized or expired (${status}). Clearing session and redirecting to login.`);
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         if (!window.location.pathname.includes('/login')) {
