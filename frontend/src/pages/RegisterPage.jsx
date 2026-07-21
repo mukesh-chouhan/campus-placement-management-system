@@ -12,7 +12,7 @@ const RegisterPage = () => {
     password: '',
     confirmPassword: '',
     rollNumber: '',
-    branch: 'Computer Science',
+    branch: 'Computer Science & Engineering (CSE)',
     cgpa: '',
     backlogs: '0',
     graduationYear: '2026',
@@ -124,7 +124,7 @@ const RegisterPage = () => {
                   className="form-control"
                   value={formData.email}
                   onChange={handleChange}
-                  placeholder="e.g. rohit@placehub.com"
+                  placeholder="e.g. mukeshchouhan@gmail.com"
                   required
                 />
               </div>
@@ -181,10 +181,17 @@ const RegisterPage = () => {
                   onChange={handleChange}
                   required
                 >
-                  <option value="Computer Science">Computer Science</option>
-                  <option value="Information Technology">Information Technology</option>
-                  <option value="Electronics Engineering">Electronics Engineering</option>
-                  <option value="Electrical Engineering">Electrical Engineering</option>
+                  <option value="Computer Science & Engineering (CSE)">Computer Science & Engineering (CSE)</option>
+                  <option value="Computer Science & Engineering (AI & ML)">Computer Science & Engineering (AI & ML)</option>
+                  <option value="Computer Science & Engineering (Data Science)">Computer Science & Engineering (Data Science)</option>
+                  <option value="Computer Science & Engineering (Cyber Security)">Computer Science & Engineering (Cyber Security)</option>
+                  <option value="Computer Science & Engineering (IoT)">Computer Science & Engineering (IoT)</option>
+                  <option value="Computer Science & Engineering (Cloud Computing)">Computer Science & Engineering (Cloud Computing)</option>
+                  <option value="Computer Science & Engineering (Artificial Intelligence)">Computer Science & Engineering (Artificial Intelligence)</option>
+                  <option value="Computer Science & Engineering (Machine Learning)">Computer Science & Engineering (Machine Learning)</option>
+                  <option value="Information Technology (IT)">Information Technology (IT)</option>
+                  <option value="Electronics & Communication Engineering (ECE)">Electronics & Communication Engineering (ECE)</option>
+                  <option value="Electrical & Electronics Engineering (EEE)">Electrical & Electronics Engineering (EEE)</option>
                   <option value="Mechanical Engineering">Mechanical Engineering</option>
                   <option value="Civil Engineering">Civil Engineering</option>
                 </select>
