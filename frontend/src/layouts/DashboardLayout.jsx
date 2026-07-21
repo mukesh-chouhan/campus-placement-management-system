@@ -20,12 +20,13 @@ import {
   Sun,
   Moon,
   Megaphone,
-  ChevronDown
+  ChevronDown,
+  Clock
 } from 'lucide-react';
 import "./DashboardLayout.css";
 
 const DashboardLayout = () => {
-  const { user, logout, isAdmin, isStudent } = useAuth();
+  const { user, logout, isAdmin, isStudent, stayLoggedIn, sessionExpiringModalOpen, remainingSeconds } = useAuth();
   const navigate = useNavigate();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -549,6 +550,48 @@ const DashboardLayout = () => {
                     </div>
                   ))
                 )}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Session Expiring Warning Modal (14-minute inactivity prompt) */}
+      <AnimatePresence>
+        {sessionExpiringModalOpen && (
+          <div className="modal-backdrop" style={{ zIndex: 4000, backgroundColor: 'rgba(15, 23, 42, 0.7)' }}>
+            <motion.div 
+              className="modal-content"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              onClick={(e) => e.stopPropagation()}
+              style={{ maxWidth: 440, borderRadius: 12, padding: 24, textAlign: 'center', backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)' }}
+            >
+              <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'var(--warning-light)', color: 'var(--warning)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+                <Clock size={24} />
+              </div>
+              <h3 style={{ fontSize: '1.2rem', fontWeight: 700, margin: '0 0 8px' }}>Session Expiring</h3>
+              <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', lineHeight: 1.5, margin: '0 0 20px' }}>
+                Your session will expire in <strong style={{ color: 'var(--danger)', fontSize: '1rem' }}>{remainingSeconds} seconds</strong> due to inactivity.
+              </p>
+
+              <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
+                <button 
+                  className="btn btn-secondary" 
+                  onClick={() => handleLogout()}
+                  style={{ flex: 1 }}
+                >
+                  Log Out Now
+                </button>
+                <button 
+                  className="btn btn-primary" 
+                  onClick={stayLoggedIn}
+                  style={{ flex: 1 }}
+                >
+                  Stay Logged In
+                </button>
               </div>
             </motion.div>
           </div>

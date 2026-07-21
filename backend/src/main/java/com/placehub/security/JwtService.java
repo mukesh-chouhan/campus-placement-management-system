@@ -22,7 +22,7 @@ public class JwtService {
                 .subject(email)
                 .claim("role", role)
                 .issuedAt(new Date(now))
-                .expiration(new Date(now + 1000 * 60 * 60 * 8))
+                .expiration(new Date(now + 1000 * 60 * 15)) // 15 Minutes JWT Expiration
                 .signWith(getSigningKey())
                 .compact();
     }

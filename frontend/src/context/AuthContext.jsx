@@ -1,59 +1,124 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
-import API from '../api/api';
+import React, { createContext, useState, useEffect, useContext, useRef } from 'react';
+import API, { clearAuthSession } from '../api/api';
+import toast from 'react-hot-toast';
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => {
-    const storedUser = localStorage.getItem('user');
+    const storedUser = sessionStorage.getItem('user') || localStorage.getItem('user');
     return storedUser ? JSON.parse(storedUser) : null;
   });
-  const [token, setToken] = useState(() => localStorage.getItem('token'));
+  const [token, setToken] = useState(() => sessionStorage.getItem('token') || localStorage.getItem('token'));
   const [loading, setLoading] = useState(true);
 
+  // 14-Minute Warning & 15-Minute Expiration Modal States
+  const [sessionExpiringModalOpen, setSessionExpiringModalOpen] = useState(false);
+  const [remainingSeconds, setRemainingSeconds] = useState(60);
+
+  const lastActivityRef = useRef(Date.now());
+  const warningTimerRef = useRef(null);
+  const logoutTimerRef = useRef(null);
+  const countdownIntervalRef = useRef(null);
+
   useEffect(() => {
-    // Basic verification on load
     if (token) {
       API.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     }
     setLoading(false);
   }, [token]);
 
-  // 30-minute auto-logout on inactivity
+  // 15-Minute Inactivity Tracker (14-min Warning + 15-min Forced Logout)
   useEffect(() => {
     if (!token) return;
 
-    let timeoutId;
-    const INACTIVITY_LIMIT = 30 * 60 * 1000; // 30 minutes
+    const INACTIVITY_WARNING_MS = 14 * 60 * 1000; // 14 Minutes
+    const TOTAL_INACTIVITY_MS = 15 * 60 * 1000; // 15 Minutes
 
-    const resetTimer = () => {
-      if (timeoutId) clearTimeout(timeoutId);
-      timeoutId = setTimeout(() => {
-        logout();
-        alert('Session expired due to 30 minutes of inactivity. Please log in again.');
-      }, INACTIVITY_LIMIT);
+    const resetInactivityTimers = () => {
+      // If modal is open, user activity automatically stays logged in & resets modal
+      lastActivityRef.current = Date.now();
+      
+      if (warningTimerRef.current) clearTimeout(warningTimerRef.current);
+      if (logoutTimerRef.current) clearTimeout(logoutTimerRef.current);
+      if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
+
+      setSessionExpiringModalOpen(false);
+      setRemainingSeconds(60);
+
+      // Schedule 14-minute warning
+      warningTimerRef.current = setTimeout(() => {
+        setSessionExpiringModalOpen(true);
+        setRemainingSeconds(60);
+
+        // Start 60-second countdown tick
+        countdownIntervalRef.current = setInterval(() => {
+          setRemainingSeconds(prev => {
+            if (prev <= 1) {
+              clearInterval(countdownIntervalRef.current);
+              handleInactivityLogout();
+              return 0;
+            }
+            return prev - 1;
+          });
+        }, 1000);
+      }, INACTIVITY_WARNING_MS);
+
+      // Schedule 15-minute hard logout
+      logoutTimerRef.current = setTimeout(() => {
+        handleInactivityLogout();
+      }, TOTAL_INACTIVITY_MS);
     };
 
-    // Events that register user activity
-    const events = ['mousemove', 'keydown', 'click', 'scroll', 'touchstart'];
-    events.forEach(event => window.addEventListener(event, resetTimer));
+    const handleInactivityLogout = () => {
+      logout('Your session has expired due to inactivity. Please log in again.');
+    };
 
-    resetTimer();
+    // User activity listeners
+    const activityEvents = ['mousemove', 'keydown', 'click', 'scroll', 'touchstart', 'pointerdown', 'focus'];
+    
+    // Throttled activity handler to prevent excessive re-renders
+    let throttleTimeout = null;
+    const onUserActivity = () => {
+      if (!throttleTimeout) {
+        throttleTimeout = setTimeout(() => {
+          throttleTimeout = null;
+          // Only reset if warning modal is not actively prompting, or reset if active
+          if (!sessionExpiringModalOpen) {
+            resetInactivityTimers();
+          }
+        }, 500);
+      }
+    };
+
+    activityEvents.forEach(evt => window.addEventListener(evt, onUserActivity));
+    resetInactivityTimers();
 
     return () => {
-      if (timeoutId) clearTimeout(timeoutId);
-      events.forEach(event => window.removeEventListener(event, resetTimer));
+      if (warningTimerRef.current) clearTimeout(warningTimerRef.current);
+      if (logoutTimerRef.current) clearTimeout(logoutTimerRef.current);
+      if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
+      if (throttleTimeout) clearTimeout(throttleTimeout);
+      activityEvents.forEach(evt => window.removeEventListener(evt, onUserActivity));
     };
   }, [token]);
+
+  const stayLoggedIn = () => {
+    lastActivityRef.current = Date.now();
+    setSessionExpiringModalOpen(false);
+    setRemainingSeconds(60);
+    if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
+  };
 
   const login = async (email, password) => {
     try {
       const response = await API.post('/api/auth/login', { email, password });
       const { token: jwtToken, role, name, email: userEmail } = response.data;
       
-      localStorage.setItem('token', jwtToken);
+      // Store in sessionStorage so closing tab/browser ends the session immediately
+      sessionStorage.setItem('token', jwtToken);
       const userData = { name, email: userEmail, role };
-      localStorage.setItem('user', JSON.stringify(userData));
+      sessionStorage.setItem('user', JSON.stringify(userData));
       
       setToken(jwtToken);
       setUser(userData);
@@ -68,9 +133,9 @@ export const AuthProvider = ({ children }) => {
       const response = await API.post('/api/auth/register', studentData);
       const { token: jwtToken, role, name, email: userEmail } = response.data;
       
-      localStorage.setItem('token', jwtToken);
+      sessionStorage.setItem('token', jwtToken);
       const userData = { name, email: userEmail, role };
-      localStorage.setItem('user', JSON.stringify(userData));
+      sessionStorage.setItem('user', JSON.stringify(userData));
       
       setToken(jwtToken);
       setUser(userData);
@@ -80,16 +145,19 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+  const logout = (message = null) => {
+    clearAuthSession();
     setToken(null);
     setUser(null);
+    setSessionExpiringModalOpen(false);
+    if (message) {
+      toast.error(message);
+    }
   };
 
   const updateLocalUser = (updatedProfile) => {
     const updated = { ...user, name: updatedProfile.name, email: updatedProfile.email };
-    localStorage.setItem('user', JSON.stringify(updated));
+    sessionStorage.setItem('user', JSON.stringify(updated));
     setUser(updated);
   };
 
@@ -101,6 +169,9 @@ export const AuthProvider = ({ children }) => {
     register,
     logout,
     updateLocalUser,
+    stayLoggedIn,
+    sessionExpiringModalOpen,
+    remainingSeconds,
     isAuthenticated: !!user,
     isAdmin: user?.role === 'ADMIN',
     isStudent: user?.role === 'STUDENT',
