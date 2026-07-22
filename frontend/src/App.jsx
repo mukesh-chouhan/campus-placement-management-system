@@ -1,7 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { Toaster } from 'react-hot-toast';
+import toast, { Toaster } from 'react-hot-toast';
 
 // Layouts
 import DashboardLayout from './layouts/DashboardLayout';
@@ -32,7 +32,16 @@ const ProtectedRoute = ({ children, allowedRole }) => {
   }
 
   if (allowedRole && user.role !== allowedRole) {
-    // Redirect role-violating users to their respective home dashboards
+    if (user.role === 'STUDENT' && allowedRole === 'ADMIN') {
+      setTimeout(() => {
+        toast.error("Access Denied. You are not authorized to access the Admin Portal.");
+      }, 50);
+      return <Navigate to="/dashboard" replace />;
+    }
+    if (user.role === 'ADMIN' && allowedRole === 'STUDENT') {
+      return <Navigate to="/admin/dashboard" replace />;
+    }
+    // General fallback redirect
     return <Navigate to={user.role === 'ADMIN' ? '/admin/dashboard' : '/dashboard'} replace />;
   }
 

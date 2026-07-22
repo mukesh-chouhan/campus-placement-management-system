@@ -218,15 +218,16 @@ export const AuthProvider = ({ children }) => {
     if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
   };
 
-  const login = async (email, password) => {
+  const login = async (email, password, role = 'STUDENT') => {
     try {
-      const response = await API.post('/api/auth/login', { email, password });
-      const { token: jwtToken, role, name, email: userEmail } = response.data;
+      const endpoint = role === 'ADMIN' ? '/api/auth/admin/login' : '/api/auth/student/login';
+      const response = await API.post(endpoint, { email, password });
+      const { token: jwtToken, role: resRole, name, email: userEmail } = response.data;
       
       // Store STRICTLY in sessionStorage
       clearAuthSession();
       sessionStorage.setItem('token', jwtToken);
-      const userData = { name, email: userEmail, role };
+      const userData = { name, email: userEmail, role: resRole };
       sessionStorage.setItem('user', JSON.stringify(userData));
       sessionStorage.setItem('lastActiveTime', String(Date.now()));
       

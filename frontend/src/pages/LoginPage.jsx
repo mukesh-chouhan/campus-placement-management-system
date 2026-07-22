@@ -18,7 +18,7 @@ const LoginPage = () => {
     setLoading(true);
 
     try {
-      const user = await login(email, password);
+      const user = await login(email, password, roleTab);
       toast.success(`Welcome back, ${user.name}!`);
       if (user.role === 'ADMIN') {
         navigate('/admin/dashboard');
@@ -26,8 +26,16 @@ const LoginPage = () => {
         navigate('/dashboard');
       }
     } catch (err) {
-      setError(err);
-      toast.error(err || 'Failed to authenticate');
+      let displayError = err;
+      if (typeof err === 'string') {
+        if (err.includes('Administrator')) {
+          displayError = 'This account is registered as an Administrator. Please log in using the Admin Login page.';
+        } else if (err.includes('Student')) {
+          displayError = 'This account is registered as a Student. Please log in using the Student Login page.';
+        }
+      }
+      setError(displayError);
+      toast.error(displayError || 'Failed to authenticate');
     } finally {
       setLoading(false);
     }

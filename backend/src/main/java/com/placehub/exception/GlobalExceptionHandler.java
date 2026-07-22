@@ -51,6 +51,11 @@ public class GlobalExceptionHandler {
         return buildError(HttpStatus.FORBIDDEN, ex.getMessage());
     }
 
+    @ExceptionHandler(RoleMismatchException.class)
+    public ResponseEntity<Map<String, Object>> handleRoleMismatch(RoleMismatchException ex) {
+        return buildError(HttpStatus.FORBIDDEN, ex.getMessage());
+    }
+
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<Map<String, Object>> handleIllegalState(IllegalStateException ex) {
         return buildError(HttpStatus.BAD_REQUEST, ex.getMessage());
