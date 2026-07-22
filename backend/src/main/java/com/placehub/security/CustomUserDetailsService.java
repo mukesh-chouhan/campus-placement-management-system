@@ -22,14 +22,14 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        Student student = studentRepository.findByEmail(username).orElse(null);
-        if (student != null) {
-            return new User(student.getEmail(), student.getPassword(), List.of(new SimpleGrantedAuthority("ROLE_" + student.getRole().name())));
-        }
-
         Admin admin = adminRepository.findByEmail(username).orElse(null);
         if (admin != null) {
             return new User(admin.getEmail(), admin.getPassword(), List.of(new SimpleGrantedAuthority("ROLE_" + admin.getRole().name())));
+        }
+
+        Student student = studentRepository.findByEmail(username).orElse(null);
+        if (student != null) {
+            return new User(student.getEmail(), student.getPassword(), List.of(new SimpleGrantedAuthority("ROLE_" + student.getRole().name())));
         }
 
         throw new UsernameNotFoundException("User not found");

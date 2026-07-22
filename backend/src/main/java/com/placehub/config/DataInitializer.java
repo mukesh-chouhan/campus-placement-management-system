@@ -33,7 +33,13 @@ public class DataInitializer implements CommandLineRunner {
     public void run(String... args) throws Exception {
         log.info("Checking data seeding status...");
 
-        // 1. Seed & Reset Admin (Ensure admin@placehub.com is always active with password 'admin123')
+        // 1. Seed & Reset Admin (Ensure admin@placehub.com is always active with password 'admin@123')
+        Student conflictingStudent = studentRepository.findByEmail("admin@placehub.com").orElse(null);
+        if (conflictingStudent != null) {
+            log.info("Removing conflicting Student record with Admin email...");
+            studentRepository.delete(conflictingStudent);
+        }
+
         Admin admin = adminRepository.findByEmail("admin@placehub.com").orElse(null);
         if (admin == null) {
             log.info("Seeding Admin User...");
