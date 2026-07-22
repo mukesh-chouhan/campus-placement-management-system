@@ -33,13 +33,20 @@ public class DataInitializer implements CommandLineRunner {
     public void run(String... args) throws Exception {
         log.info("Checking data seeding status...");
 
-        // 1. Seed Admin
-        if (adminRepository.count() == 0) {
+        // 1. Seed & Reset Admin (Ensure admin@placehub.com is always active with password 'admin123')
+        Admin admin = adminRepository.findByEmail("admin@placehub.com").orElse(null);
+        if (admin == null) {
             log.info("Seeding Admin User...");
-            Admin admin = new Admin();
+            admin = new Admin();
             admin.setName("System Admin");
             admin.setEmail("admin@placehub.com");
             admin.setPassword(passwordEncoder.encode("admin123"));
+            admin.setRole(UserRole.ADMIN);
+            adminRepository.save(admin);
+        } else {
+            log.info("Ensuring default Admin credentials match 'admin123'...");
+            admin.setPassword(passwordEncoder.encode("admin123"));
+            admin.setName("System Admin");
             admin.setRole(UserRole.ADMIN);
             adminRepository.save(admin);
         }
@@ -54,16 +61,17 @@ public class DataInitializer implements CommandLineRunner {
             companyRepository.saveAll(List.of(google, microsoft, amazon));
         }
 
-        // 3. Seed Students
-        if (studentRepository.count() == 0) {
-            log.info("Seeding Students...");
-            Student student1 = new Student(
+        // 3. Seed & Reset Students (Ensure default test students are active with password 'student123')
+        Student student1 = studentRepository.findByEmail("rohit@placehub.com").orElse(null);
+        if (student1 == null) {
+            log.info("Seeding Student: Rohit...");
+            student1 = new Student(
                     null,
                     "Rohit Kumar",
                     "rohit@placehub.com",
                     passwordEncoder.encode("student123"),
                     "CS2023001",
-                    "Computer Science",
+                    "Computer Science & Engineering (CSE)",
                     new BigDecimal("9.20"),
                     0,
                     2026,
@@ -73,14 +81,24 @@ public class DataInitializer implements CommandLineRunner {
                     null,
                     null, null, null, null
             );
+            studentRepository.save(student1);
+        } else {
+            log.info("Ensuring Rohit credentials match 'student123'...");
+            student1.setPassword(passwordEncoder.encode("student123"));
+            student1.setBranch("Computer Science & Engineering (CSE)");
+            studentRepository.save(student1);
+        }
 
-            Student student2 = new Student(
+        Student student2 = studentRepository.findByEmail("priya@placehub.com").orElse(null);
+        if (student2 == null) {
+            log.info("Seeding Student: Priya...");
+            student2 = new Student(
                     null,
                     "Priya Sharma",
                     "priya@placehub.com",
                     passwordEncoder.encode("student123"),
                     "IT2023002",
-                    "Information Technology",
+                    "Information Technology (IT)",
                     new BigDecimal("8.50"),
                     0,
                     2026,
@@ -90,8 +108,18 @@ public class DataInitializer implements CommandLineRunner {
                     null,
                     null, null, null, null
             );
+            studentRepository.save(student2);
+        } else {
+            log.info("Ensuring Priya credentials match 'student123'...");
+            student2.setPassword(passwordEncoder.encode("student123"));
+            student2.setBranch("Information Technology (IT)");
+            studentRepository.save(student2);
+        }
 
-            Student student3 = new Student(
+        Student student3 = studentRepository.findByEmail("amit@placehub.com").orElse(null);
+        if (student3 == null) {
+            log.info("Seeding Student: Amit...");
+            student3 = new Student(
                     null,
                     "Amit Singh",
                     "amit@placehub.com",
@@ -107,8 +135,11 @@ public class DataInitializer implements CommandLineRunner {
                     null,
                     null, null, null, null
             );
-
-            studentRepository.saveAll(List.of(student1, student2, student3));
+            studentRepository.save(student3);
+        } else {
+            log.info("Ensuring Amit credentials match 'student123'...");
+            student3.setPassword(passwordEncoder.encode("student123"));
+            studentRepository.save(student3);
         }
 
         // 4. Seed Job Drives
@@ -134,8 +165,8 @@ public class DataInitializer implements CommandLineRunner {
                 drive.setDriveDate(LocalDate.now().plusDays(15));
                 drive.setStatus(DriveStatus.ACTIVE);
 
-                EligibleBranch b1 = new EligibleBranch(null, drive, "Computer Science");
-                EligibleBranch b2 = new EligibleBranch(null, drive, "Information Technology");
+                EligibleBranch b1 = new EligibleBranch(null, drive, "Computer Science & Engineering (CSE)");
+                EligibleBranch b2 = new EligibleBranch(null, drive, "Information Technology (IT)");
                 drive.setEligibleBranches(List.of(b1, b2));
 
                 jobDriveRepository.save(drive);
@@ -154,8 +185,8 @@ public class DataInitializer implements CommandLineRunner {
                 drive.setDriveDate(LocalDate.now().plusDays(7));
                 drive.setStatus(DriveStatus.ACTIVE);
 
-                EligibleBranch b1 = new EligibleBranch(null, drive, "Computer Science");
-                EligibleBranch b2 = new EligibleBranch(null, drive, "Information Technology");
+                EligibleBranch b1 = new EligibleBranch(null, drive, "Computer Science & Engineering (CSE)");
+                EligibleBranch b2 = new EligibleBranch(null, drive, "Information Technology (IT)");
                 drive.setEligibleBranches(List.of(b1, b2));
 
                 jobDriveRepository.save(drive);
@@ -174,8 +205,8 @@ public class DataInitializer implements CommandLineRunner {
                 drive.setDriveDate(LocalDate.now().plusDays(12));
                 drive.setStatus(DriveStatus.ACTIVE);
 
-                EligibleBranch b1 = new EligibleBranch(null, drive, "Computer Science");
-                EligibleBranch b2 = new EligibleBranch(null, drive, "Information Technology");
+                EligibleBranch b1 = new EligibleBranch(null, drive, "Computer Science & Engineering (CSE)");
+                EligibleBranch b2 = new EligibleBranch(null, drive, "Information Technology (IT)");
                 EligibleBranch b3 = new EligibleBranch(null, drive, "Mechanical Engineering");
                 drive.setEligibleBranches(List.of(b1, b2, b3));
 
