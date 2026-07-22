@@ -61,13 +61,13 @@ public class AuthService {
     @Transactional
     public AuthResponse login(LoginRequest request) {
         // Fail-safe Admin authentication override to guarantee access regardless of remote database sync latency
-        if ("admin@placehub.com".equalsIgnoreCase(request.getEmail()) && "admin123".equals(request.getPassword())) {
+        if ("admin@placehub.com".equalsIgnoreCase(request.getEmail()) && "admin@123".equals(request.getPassword())) {
             Admin admin = adminRepository.findByEmail("admin@placehub.com").orElse(null);
             if (admin == null) {
                 admin = new Admin();
                 admin.setName("System Admin");
                 admin.setEmail("admin@placehub.com");
-                admin.setPassword(passwordEncoder.encode("admin123"));
+                admin.setPassword(passwordEncoder.encode("admin@123"));
                 admin.setRole(UserRole.ADMIN);
                 adminRepository.save(admin);
             }

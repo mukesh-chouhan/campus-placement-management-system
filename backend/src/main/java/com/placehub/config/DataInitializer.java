@@ -40,12 +40,12 @@ public class DataInitializer implements CommandLineRunner {
             admin = new Admin();
             admin.setName("System Admin");
             admin.setEmail("admin@placehub.com");
-            admin.setPassword(passwordEncoder.encode("admin123"));
+            admin.setPassword(passwordEncoder.encode("admin@123"));
             admin.setRole(UserRole.ADMIN);
             adminRepository.save(admin);
         } else {
-            log.info("Ensuring default Admin credentials match 'admin123'...");
-            admin.setPassword(passwordEncoder.encode("admin123"));
+            log.info("Ensuring default Admin credentials match 'admin@123'...");
+            admin.setPassword(passwordEncoder.encode("admin@123"));
             admin.setName("System Admin");
             admin.setRole(UserRole.ADMIN);
             adminRepository.save(admin);
