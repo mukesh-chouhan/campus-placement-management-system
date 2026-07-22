@@ -50,6 +50,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
         } catch (Exception e) {
             log.error("Failed to authenticate user from JWT token for URI {}: {}", request.getRequestURI(), e.getMessage());
+            e.printStackTrace();
         }
 
         filterChain.doFilter(request, response);

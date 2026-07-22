@@ -36,6 +36,8 @@ public class JwtService {
             Jwts.parser().verifyWith(getSigningKey()).build().parseSignedClaims(token);
             return true;
         } catch (Exception ex) {
+            System.err.println("JWT Validation failed: " + ex.getMessage());
+            ex.printStackTrace();
             return false;
         }
     }
