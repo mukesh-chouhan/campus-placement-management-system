@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
     private final AuthService authService;
     private final com.placehub.security.JwtService jwtService;
+    private final com.placehub.security.CustomUserDetailsService customUserDetailsService;
 
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
@@ -38,6 +39,19 @@ public class AuthController {
             debugInfo.put("valid", valid);
             String email = jwtService.extractEmail(token);
             debugInfo.put("email", email);
+            
+            // Debug loadUserByUsername
+            try {
+                org.springframework.security.core.userdetails.UserDetails userDetails = customUserDetailsService.loadUserByUsername(email);
+                debugInfo.put("userDetailsName", userDetails.getUsername());
+                debugInfo.put("userDetailsAuthorities", userDetails.getAuthorities().toString());
+            } catch (Exception e) {
+                debugInfo.put("userDetailsError", e.getMessage());
+                java.io.StringWriter sw = new java.io.StringWriter();
+                java.io.PrintWriter pw = new java.io.PrintWriter(sw);
+                e.printStackTrace(pw);
+                debugInfo.put("userDetailsStacktrace", sw.toString());
+            }
         } catch (Exception e) {
             debugInfo.put("error", e.getMessage());
             java.io.StringWriter sw = new java.io.StringWriter();
