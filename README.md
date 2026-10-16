@@ -106,13 +106,33 @@ The backend reads configuration settings from environment variables:
 
 ## Demo Accounts
 
-### Administrator Hub
-- **Email:** `admin@placehub.com`
-- **Password:** `admin123`
+### 🛡️ Administrator Hub
+> Select the **Admin Hub** tab on the login page.
 
-### Student Dashboard
-- **Email:** `rohit@placehub.com`
-- **Password:** `student123`
+| Field | Value |
+|-------|-------|
+| **Email** | `admin@placehub.com` |
+| **Password** | `admin@123` |
+
+### 🎓 Student Portal
+> Select the **Student Portal** tab on the login page.
+
+| Field | Value |
+|-------|-------|
+| **Email** | `rohit@placehub.com` |
+| **Password** | `student123` |
+
+| Field | Value |
+|-------|-------|
+| **Email** | `priya@placehub.com` |
+| **Password** | `student123` |
+
+| Field | Value |
+|-------|-------|
+| **Email** | `amit@placehub.com` |
+| **Password** | `student123` |
+
+> ⚠️ **Note:** Entering Admin credentials on the Student Portal (or vice versa) will be rejected with a role mismatch error. Each login page only accepts its own account type.
 
 ---
 
