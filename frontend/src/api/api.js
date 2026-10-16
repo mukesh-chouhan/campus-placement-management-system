@@ -50,8 +50,13 @@ API.interceptors.response.use(
   (error) => {
     if (error.response) {
       const status = error.response.status;
-      // 401 Unauthorized or 403 Forbidden indicates expired token or unauthorized access
-      if (status === 401 || status === 403) {
+      const requestUrl = error.config?.url || '';
+
+      // Skip session clearing for auth endpoints (login/register).
+      // 403 on /api/auth/* is a role-mismatch business rejection, NOT a session expiry.
+      const isAuthEndpoint = requestUrl.includes('/api/auth/');
+
+      if ((status === 401 || status === 403) && !isAuthEndpoint) {
         console.warn(`[API Interceptor] Session unauthorized or expired (${status}). Clearing session and redirecting to login.`);
         clearAuthSession();
         if (!window.location.pathname.includes('/login')) {
