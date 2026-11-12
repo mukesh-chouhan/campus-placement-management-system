@@ -69,4 +69,20 @@ API.interceptors.response.use(
   }
 );
 
+// Keep-alive ping: prevents Render free tier from sleeping
+// Pings the backend every 14 minutes silently
+const PING_INTERVAL_MS = 14 * 60 * 1000; // 14 minutes
+const pingBackend = () => {
+  fetch('https://campus-placement-management-system-v6j0.onrender.com/api/auth/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: 'ping@keep-alive.internal', password: 'ping' }),
+  }).catch(() => {}); // silently ignore response/errors
+};
+// Start pinging after 1 minute, then every 14 minutes
+setTimeout(() => {
+  pingBackend();
+  setInterval(pingBackend, PING_INTERVAL_MS);
+}, 60 * 1000);
+
 export default API;
