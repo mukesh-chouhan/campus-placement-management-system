@@ -31,7 +31,7 @@ public class DataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        log.info("Checking data seeding status...");
+        log.info("Checking data seeding status... [Build: Nov 2026]");
 
         // 1. Seed & Reset Admin (Ensure admin@placehub.com is always active with password 'admin@123')
         Student conflictingStudent = studentRepository.findByEmail("admin@placehub.com").orElse(null);
